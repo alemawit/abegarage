@@ -3,6 +3,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const { pool } = require("../db");
 
+
 dotenv.config();
 
 const app = express();
@@ -12,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 // Get all employees with optional limit
-app.get("/api/employees", async (req, res) => {
+const getAllEmployee = async (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit) : 10;
     const [rows] = await pool.query("SELECT * FROM employees LIMIT ?", [limit]);
@@ -22,11 +23,10 @@ app.get("/api/employees", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }
-});
+}};
 
 // Get a single employee by ID
-app.get("/api/employee/:id", async (req, res) => {
+const getSingleEmployee= async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const [rows] = await pool.query(
@@ -41,10 +41,10 @@ app.get("/api/employee/:id", async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-});
+};
 
 // Add a new employee
-app.post("/api/employee", async (req, res) => {
+const addNewEmployee= async (req, res) => {
   try {
     const newEmployee = {
       ...req.body,
@@ -55,10 +55,10 @@ app.post("/api/employee", async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-});
+}
 
 // Update an existing employee
-app.put("/api/employee/:id", async (req, res) => {
+const updateEmployee= async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const updateData = { ...req.body };
@@ -74,9 +74,7 @@ app.put("/api/employee/:id", async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-});
+  }
 
-// Start the server
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+  
+module.exports = {  getAllEmployee, getSingleEmployee, addNewEmployee, updateEmployee }
