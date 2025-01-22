@@ -68,9 +68,26 @@ const getOrderByIdService = async (order_id) => {
     });
   });
 };
+// Delete an order by ID
+const deleteOrderService = async (order_id) => {
+  const query = "DELETE FROM orders WHERE order_id = ?";
+
+  return new Promise((resolve, reject) => {
+    db.execute(query, [order_id], (err, result) => {
+      if (err) {
+        return reject(err);
+      }
+      if (result.affectedRows === 0) {
+        return reject(new Error("Order not found"));
+      }
+      resolve({ message: "Order deleted successfully" });
+    });
+  });
+};
 
 export default {
   createOrderService,
   getAllOrdersService,
   getOrderByIdService,
+    deleteOrderService,
 };
