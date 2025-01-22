@@ -1,57 +1,100 @@
 const express = require("express");
-const router = express.Router();
+const mysql = require("mysql2");
+const crypto = require("crypto");
+const dbconfig = require("../dbconfig/db.config");
 
-// GET all orders
-router.get("/orders", (req, res) => {
-  const { limit, sortby, completed } = req.query;
-  let filteredOrders = orders;
 
-  if (completed !== undefined) {
-    filteredOrders = filteredOrders.filter(
-      (order) => order.order_completed == completed
-    );
+
+// Generate order hash
+function generateOrderHash(customerId, employeeId, orderDate) {
+  const hashInput = `${customerId}${employeeId}${orderDate}`;
+  return crypto.createHash("sha256").update(hashInput).digest("hex");
+}
+
+// Create a new order
+app.post("/orders", (req, res) => {
+  const { customer_id, employee_id, order_status } = req.body;
+
+  if (!customer_id || !employee_id || !order_status) {
+    return res.status(400).json({ error: "Missing required fields" });
   }
 
-  if (sortby) {
-    filteredOrders.sort((a, b) => new Date(a[sortby]) - new Date(b[sortby]));
-  }
+  const order_date = new Date();
+  const order_hash = generateOrderHash(customer_id, employee_id, order_date);
 
-  if (limit) {
-    filteredOrders = filteredOrders.slice(0, parseInt(limit));
-  }
+  const query = `
+    INSERT INTO orders (customer_id, employee_id, order_date, order_hash, order_status)
+    VALUES (?, ?, ?, ?, ?)
+  `;
 
-  res.status(200).json(filteredOrders);
+  db.execute(
+    query,
+    [customer_id, employee_id, order_date, order_hash, order_status],
+    (err, result) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      res.status(201).json({
+        order_id: result.insertId,
+        customer_id,
+        employee_id,
+        order_date,
+        order_hash,
+        order_status,
+      });
+    }
+  );
 });
 
-// GET order by ID
-router.get("/order/:id", (req, res) => {
-  const orderId = parseInt(req.params.id);
-  const order = orders.find((o) => o.order_id === orderId);
-  if (order) {
-    res.status(200).json(order);
-  } else {
-    res.status(404).json({ message: "Order not found" });
-  }
+// Get a specific order
+app.get("/orders/:order_id", (req, res) => {
+  const { order_id } = req.params;
+
+  const query = "SELECT * FROM orders WHERE order_id = ?";
+
+  db.execute(query, [order_id], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    res.json(results[0]);
+  });
 });
 
-// POST new order
-router.post("/order", (req, res) => {
-  const newOrder = req.body;
-  newOrder.order_id = orders.length + 1;
-  orders.push(newOrder);
-  res.status(201).json({ success: "true" });
+// Get all orders
+app.get("/orders", (req, res) => {
+  const query = "SELECT * FROM orders";
+
+  db.execute(query, (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    res.json(results);
+  });
 });
 
-// PUT update order
-router.put("/order", (req, res) => {
-  const { order_id, ...updateData } = req.body;
-  const orderIndex = orders.findIndex((o) => o.order_id === order_id);
-  if (orderIndex !== -1) {
-    orders[orderIndex] = { ...orders[orderIndex], ...updateData };
-    res.status(200).json({ success: "true" });
-  } else {
-    res.status(404).json({ message: "Order not found" });
-  }
+// Delete an order
+app.delete("/orders/:order_id", (req, res) => {
+  const { order_id } = req.params;
+
+  const query = "DELETE FROM orders WHERE order_id = ?";
+
+  db.execute(query, [order_id], (err, result) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    res.json({ message: "Order deleted successfully" });
+  });
 });
 
-module.exports = router;
