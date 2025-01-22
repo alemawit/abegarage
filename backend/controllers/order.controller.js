@@ -28,21 +28,7 @@ const getAllOrders = async(req, res) => {
 };
 
 // Delete an order
-const deleteOrder = (req, res) => {
-  const { order_id } = req.params;
-
-  const query = "DELETE FROM orders WHERE order_id = ?";
-
-  db.execute(query, [order_id], (err, result) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Order not found" });
-    }
-
-    res.json({ message: "Order deleted successfully" });
-  });
+const deleteOrder = async(req, res) => {
+  await deleteOrderService(order_id);
 };
 
