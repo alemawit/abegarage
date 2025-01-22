@@ -75,6 +75,14 @@ const updateEmployee= async (req, res) => {
     res.status(500).json({ message: error.message });
   }
   }
+// Export the functions
+const employeeController = {
+  getAllEmployee,
+  getSingleEmployee,
+  addNewEmployee,
+  updateEmployee,
+};
+
+module.exports = employeeController;
 
   
-module.exports = {  getAllEmployee, getSingleEmployee, addNewEmployee, updateEmployee }
