@@ -3,10 +3,14 @@ const express = require("express");
 const cors = require("cors");
 const pool = require("./dbconfig/db.config"); // Import the DB pool
 //import service module to create tables
-const service = require("./service/query.module");
+const service = require("./service/install.service");
+//import the router
+const router = require("./routes/index");
 
 // Create a new express application
 const app = express();
+//add the router to the application as a middleware
+app.use(router);
 
 // Use cors middleware for handling cross-origin requests
 app.use(cors());
