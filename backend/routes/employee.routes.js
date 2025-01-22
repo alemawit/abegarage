@@ -8,15 +8,15 @@ const router = express.Router();
 // Routes
 
 // Get all employees
-app.get("/api/employees",Getallemployees);
+app.get("/api/employees",getAllEmployee);
 
 // Get single employee by ID
-app.get("/api/employee/:id",Getsingleemployee);
+app.get("/api/employee/:id",getSingleEmployee);
   
 // Add new employee
-app.post("/api/employee",Addnewemployee);
+app.post("/api/employee",addNewEmployee);
 
 // Update employee by ID
-app.put("/api/employee",Updateemployee); 
+app.put("/api/employee",updateEmployee); 
   
 export default router;
