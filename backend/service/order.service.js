@@ -68,6 +68,7 @@ const getOrderByIdService = async (order_id) => {
     });
   });
 };
+
 // Delete an order by ID
 const deleteOrderService = async (order_id) => {
   const query = "DELETE FROM orders WHERE order_id = ?";
@@ -85,9 +86,9 @@ const deleteOrderService = async (order_id) => {
   });
 };
 
-export default {
+export {
   createOrderService,
   getAllOrdersService,
   getOrderByIdService,
-    deleteOrderService,
+  deleteOrderService,
 };
