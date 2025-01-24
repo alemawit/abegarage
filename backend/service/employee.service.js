@@ -1,43 +1,126 @@
-const { pool } = require("../db");
+const { dbPromise } = require("../dbconfig/db.config");
+const { StatusCodes } = require("http-status-codes");
 
-class EmployeeService {
-  async getAllEmployees(limit = 10) {
-    const [rows] = await pool.query("SELECT * FROM employees LIMIT ?", [limit]);
-    return rows;
+
+// Function to get all employees with a limit
+async function getAllEmployees(req, res) {
+  const limit = parseInt(req.query.limit) || 10;
+  try {
+    const [rows] = await dbPromise.query("SELECT * FROM employees LIMIT ?", [limit]);
+    return res.status(StatusCodes.OK).json(rows);
+  } catch (error) {
+    console.error(error.message);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      msg: "Something went wrong, try again later!",
+    });
   }
+}
 
-  async getEmployeeById(id) {
-    const [rows] = await pool.query(
+// Function to get an employee by ID
+async function getEmployeeById(req, res) {
+  const { id } = req.params;
+  try {
+    const [rows] = await dbPromise.query(
       "SELECT * FROM employees WHERE employee_id = ?",
       [id]
     );
     if (rows.length > 0) {
-      return rows[0];
+      return res.status(StatusCodes.OK).json(rows[0]);
     } else {
-      throw new Error("Employee not found");
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ msg: "Employee not found" });
     }
+  } catch (error) {
+    console.error(error.message);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      msg: "Something went wrong, try again later!",
+    });
+  }
+}
+
+// Function to add a new employee
+async function addEmployee(req, res) {
+  const newEmployee = req.body;
+  if (!newEmployee.name || !newEmployee.position) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Please provide employee name and position" });
   }
 
-  async addEmployee(newEmployee) {
-    newEmployee.added_date = new Date()
-      .toISOString()
-      .slice(0, 19)
-      .replace("T", " ");
-    const result = await pool.query("INSERT INTO employees SET ?", newEmployee);
-    return result[0].insertId;
+  newEmployee.added_date = new Date()
+    .toISOString()
+    .slice(0, 19)
+    .replace("T", " ");
+  try {
+    const result = await dbPromise.query("INSERT INTO employees SET ?", newEmployee);
+    return res
+      .status(StatusCodes.CREATED)
+      .json({ msg: "Employee added successfully", id: result[0].insertId });
+  } catch (error) {
+    console.error(error.message);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      msg: "An unexpected error occurred",
+    });
+  }
+}
+
+// Function to update an employee by ID
+async function updateEmployee(req, res) {
+  const { id } = req.params;
+  const updateData = req.body;
+  if (!id || !updateData.name || !updateData.position) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Please provide employee ID, name, and position" });
   }
 
-  async updateEmployee(id, updateData) {
-    const result = await pool.query(
+  try {
+    const result = await dbPromise.query(
       "UPDATE employees SET ? WHERE employee_id = ?",
       [updateData, id]
     );
     if (result[0].affectedRows > 0) {
-      return true;
+      return res
+        .status(StatusCodes.OK)
+        .json({ msg: "Employee updated successfully" });
     } else {
-      throw new Error("Employee not found");
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ msg: "Employee not found" });
     }
+  } catch (error) {
+    console.error(error.message);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      msg: "Something went wrong, try again later!",
+    });
   }
 }
+
+// Function to delete an employee by ID
+async function deleteEmployee(req, res) {
+  const { id } = req.params;
+  try {
+    await dbPromise.query("DELETE FROM employees WHERE employee_id = ?", [id]);
+    return res
+      .status(StatusCodes.OK)
+      .json({ msg: "Employee deleted successfully" });
+  } catch (error) {
+    console.error(error.message);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      msg: "Something went wrong, try again later!",
+    });
+  }
+}
+
+module.exports = {
+  getAllEmployees,
+  getEmployeeById,
+  addEmployee,
+  updateEmployee,
+  deleteEmployee,
+};
+ 
+
 
 module.exports = new EmployeeService();

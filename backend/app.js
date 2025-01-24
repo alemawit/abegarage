@@ -38,3 +38,4 @@ const PORT = process.env.DB_PORT; // Use the server port from the .env file or d
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
