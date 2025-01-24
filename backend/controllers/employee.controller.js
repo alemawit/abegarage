@@ -1,7 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const { pool } = require("../db");
+const { pool } = require("../dbconfig/db.config");
+//import the addEmployee service
+const { addEmployee } = require("../service/employee.service");
 
 
 dotenv.config();
@@ -44,18 +46,26 @@ const getSingleEmployee= async (req, res) => {
 };
 
 // Add a new employee
-const addNewEmployee= async (req, res) => {
+const addNewEmployee = async (req, res) => {
   try {
-    const newEmployee = {
-      ...req.body,
-      added_date: new Date().toISOString().slice(0, 19).replace("T", " "), // Ensure added_date is in the correct format
-    };
-    const result = await pool.query("INSERT INTO employees SET ?", newEmployee);
-    res.status(200).json({ success: "true", insertId: result[0].insertId });
+    console.log("Controller Request Body:", req.body); // Debugging log
+     if (!req.body) {
+       throw new Error(
+         "Request body is missing. Ensure express.json() is enabled."
+       );
+     }
+    // Call the service function
+    await addEmployee(req, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Controller Error:", error.message);
+    res.status(500).json({
+      msg: "An unexpected error occurred in the controller",
+    });
   }
-}
+};
+
+
+
 
 // Update an existing employee
 const updateEmployee= async (req, res) => {

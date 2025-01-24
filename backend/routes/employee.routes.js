@@ -1,22 +1,26 @@
 
 // Employ.js
 
-import express from "express";
+//import express from "express";
+const express = require("express");
 const bodyParser = require("body-parser");
 const router = express.Router();
+//import the employee controller
+const {getAllEmployee,getSingleEmployee,addNewEmployee,updateEmployee} = require("../controllers/employee.controller");
 
 // Routes
 
 // Get all employees
-app.get("/api/employees",getAllEmployee);
+router.get("/api/employee",getAllEmployee);
 
 // Get single employee by ID
-app.get("/api/employee/:id",getSingleEmployee);
+router.get("/api/employee/:id",getSingleEmployee);
   
 // Add new employee
-app.post("/api/employee",addNewEmployee);
+router.post("/api/employee",addNewEmployee);
 
 // Update employee by ID
-app.put("/api/employee",updateEmployee); 
+router.put("/api/employee",updateEmployee); 
   
-export default router;
+//export the router
+module.exports = router;

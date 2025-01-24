@@ -1,4 +1,4 @@
-const { dbPromise } = require("../dbconfig/db.config");
+const { pool } = require("../dbconfig/db.config");
 const { StatusCodes } = require("http-status-codes");
 
 
@@ -6,7 +6,7 @@ const { StatusCodes } = require("http-status-codes");
 async function getAllEmployees(req, res) {
   const limit = parseInt(req.query.limit) || 10;
   try {
-    const [rows] = await dbPromise.query("SELECT * FROM employees LIMIT ?", [limit]);
+    const [rows] = await pool.query("SELECT * FROM employees LIMIT ?", [limit]);
     return res.status(StatusCodes.OK).json(rows);
   } catch (error) {
     console.error(error.message);
@@ -20,7 +20,7 @@ async function getAllEmployees(req, res) {
 async function getEmployeeById(req, res) {
   const { id } = req.params;
   try {
-    const [rows] = await dbPromise.query(
+    const [rows] = await pool.query(
       "SELECT * FROM employees WHERE employee_id = ?",
       [id]
     );
@@ -41,29 +41,37 @@ async function getEmployeeById(req, res) {
 
 // Function to add a new employee
 async function addEmployee(req, res) {
-  const newEmployee = req.body;
-  if (!newEmployee.name || !newEmployee.position) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Please provide employee name and position" });
-  }
+  const { email} = req.body;
 
-  newEmployee.added_date = new Date()
-    .toISOString()
-    .slice(0, 19)
-    .replace("T", " ");
+  // Validate required fields
+//   if (!email) {
+//     return res
+//       .status(400) // Bad Request
+//       .json({ msg: "Please provide employee email, name, and position" });
+//   }
+
+  const added_date = new Date().toISOString().slice(0, 19).replace("T", " ");
+
   try {
-    const result = await dbPromise.query("INSERT INTO employees SET ?", newEmployee);
-    return res
-      .status(StatusCodes.CREATED)
-      .json({ msg: "Employee added successfully", id: result[0].insertId });
+    // Execute parameterized query
+    const [result] = await pool.query(
+      "INSERT INTO employee (employee_email, employee_active_status, employee_added_date) VALUES (?, 1, ?)",
+      [email, added_date]
+    );
+
+    // Send success response
+    return res.status(200).json({
+      msg: "Employee added successfully",
+      id: result.insertId, // ID of the inserted record
+    });
   } catch (error) {
-    console.error(error.message);
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+    console.error("Error adding employee:", error.message);
+    return res.status(500).json({
       msg: "An unexpected error occurred",
     });
   }
 }
+
 
 // Function to update an employee by ID
 async function updateEmployee(req, res) {
@@ -76,7 +84,7 @@ async function updateEmployee(req, res) {
   }
 
   try {
-    const result = await dbPromise.query(
+    const result = await pool.query(
       "UPDATE employees SET ? WHERE employee_id = ?",
       [updateData, id]
     );
@@ -101,7 +109,7 @@ async function updateEmployee(req, res) {
 async function deleteEmployee(req, res) {
   const { id } = req.params;
   try {
-    await dbPromise.query("DELETE FROM employees WHERE employee_id = ?", [id]);
+    await pool.query("DELETE FROM employees WHERE employee_id = ?", [id]);
     return res
       .status(StatusCodes.OK)
       .json({ msg: "Employee deleted successfully" });
@@ -123,4 +131,3 @@ module.exports = {
  
 
 
-module.exports = new EmployeeService();
