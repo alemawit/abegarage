@@ -4,6 +4,9 @@ const cors = require("cors");
 const pool = require("./dbconfig/db.config"); // Import the DB pool
 //import service module to create tables
 const service = require("./service/install.service");
+//import add employee service
+const addEmployee = require("./service/employee.service");
+
 //import the router
 const router = require("./routes/index");
 
