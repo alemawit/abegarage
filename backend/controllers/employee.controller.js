@@ -3,46 +3,64 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const { pool } = require("../dbconfig/db.config");
 //import the addEmployee service
-const { addEmployee } = require("../service/employee.service");
+const {
+  addEmployee,
+  getAllEmployeeService,
+  getSingleEmployeeService,
+  updateEmployeeService,
+} = require("../service/employee.service");
+
 
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 5001;
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
-// Get all employees with optional limit
+// Get all employees from the database
 const getAllEmployee = async (req, res) => {
-  try {
-    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-    const [rows] = await pool.query("SELECT * FROM employees LIMIT ?", [limit]);
-    res.status(200).json({
-      limit: limit,
-      contacts: rows,
-    });
-  } catch (error) {
+ try {
+   //calling the service function
+    const rows = await getAllEmployeeService(req, res);
+    if(!rows){
+      res.status(404).json({ message: "Employees not found" });
+    }
+    else{
+      res.status(200).json({
+       
+        employees: rows,
+      });
+    }
+    
+   
+ }
+  catch (error) {
     res.status(500).json({ message: error.message });
-}};
+  }
+
+
+};
 
 // Get a single employee by ID
 const getSingleEmployee= async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const [rows] = await pool.query(
-      "SELECT * FROM employees WHERE employee_id = ?",
-      [id]
-    );
-    if (rows.length > 0) {
-      res.status(200).json(rows[0]);
-    } else {
+   //calling the service function
+    const rows = await getSingleEmployeeService(req, res);
+    if(!rows){
       res.status(404).json({ message: "Employee not found" });
     }
+    else{
+      res.status(200).json({
+        employee: rows[0],
+      });
+    }
+
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }
+  } 
 };
 
 // Add a new employee
@@ -65,34 +83,35 @@ const addNewEmployee = async (req, res) => {
 };
 
 
-
-
 // Update an existing employee
-const updateEmployee= async (req, res) => {
+const updateEmployee = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const updateData = { ...req.body };
-    const result = await pool.query(
-      "UPDATE employees SET ? WHERE employee_id = ?",
-      [updateData, id]
-    );
-    if (result[0].affectedRows > 0) {
-      res.status(200).json({ success: "true" });
-    } else {
-      res.status(404).json({ message: "Employee not found" });
+    // Call the service function
+    const rows = await updateEmployeeService(req);
+
+    if (!rows) {
+      // If no rows were updated, return a 404 response
+      return res.status(404).json({ message: "Employee not found" });
     }
+
+    // Return the updated employee data
+    return res.status(200).json({
+      employee: rows[0],
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    // Handle any unexpected errors
+    return res.status(500).json({ message: error.message });
   }
-  }
+};
+
+
 // Export the functions
-const employeeController = {
+
+module.exports = {
   getAllEmployee,
   getSingleEmployee,
   addNewEmployee,
   updateEmployee,
 };
-
-module.exports = employeeController;
 
   

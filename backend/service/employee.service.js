@@ -1,133 +1,160 @@
-const { pool } = require("../dbconfig/db.config");
+const  pool  = require("../dbconfig/db.config");
 const { StatusCodes } = require("http-status-codes");
 
-
-// Function to get all employees with a limit
-async function getAllEmployees(req, res) {
-  const limit = parseInt(req.query.limit) || 10;
+// function to get all employees
+async function getAllEmployeeService(req, res) {
   try {
-    const [rows] = await pool.query("SELECT * FROM employees LIMIT ?", [limit]);
-    return res.status(StatusCodes.OK).json(rows);
+    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
+    //select all employee from the employee, employee_info and employee_pass table
+    const [rows] = await pool.query(
+      "SELECT employee.employee_id, employee.employee_email,employee_info.employee_first_name, employee_info.employee_last_name, employee_info.employee_phone, employee.employee_active_status, employee.employee_added_date  FROM employee INNER JOIN employee_info ON employee.employee_id = employee_info.employee_id LIMIT ?",
+      [limit]
+    );
+    return rows;
+
   } catch (error) {
-    console.error(error.message);
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      msg: "Something went wrong, try again later!",
-    });
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: error.message });
   }
 }
-
-// Function to get an employee by ID
-async function getEmployeeById(req, res) {
-  const { id } = req.params;
+//function to get a single employee
+async function getSingleEmployeeService(req, res) {
   try {
+    // Get the employee ID from the URL
+    const id = parseInt(req.params.id);
+    //generate a unique id
+    // if (isNaN(id)) {
+    //   return res.status(400).json({ message: "Invalid employee ID" });
+    // }
+    //select a single employee from the employee, employee_info and employee_pass table
     const [rows] = await pool.query(
-      "SELECT * FROM employees WHERE employee_id = ?",
+      "SELECT employee.employee_id, employee.employee_email,employee_info.employee_first_name, employee_info.employee_last_name, employee_info.employee_phone, employee.employee_active_status, employee.employee_added_date  FROM employee INNER JOIN employee_info ON employee.employee_id = employee_info.employee_id WHERE employee.employee_id = ?",
       [id]
     );
-    if (rows.length > 0) {
-      return res.status(StatusCodes.OK).json(rows[0]);
-    } else {
-      return res
-        .status(StatusCodes.NOT_FOUND)
-        .json({ msg: "Employee not found" });
-    }
+    return rows;
+
   } catch (error) {
-    console.error(error.message);
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      msg: "Something went wrong, try again later!",
-    });
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: error.message });
   }
 }
 
 // Function to add a new employee
 async function addEmployee(req, res) {
-  const { email} = req.body;
+  const {
+    employee_email,
+    employee_first_name,
+    employee_last_name,
+    employee_phone,
+    employee_password,
+  } = req.body;
 
   // Validate required fields
-//   if (!email) {
-//     return res
-//       .status(400) // Bad Request
-//       .json({ msg: "Please provide employee email, name, and position" });
-//   }
+  if (
+    !employee_email ||
+    !employee_first_name ||
+    !employee_last_name ||
+    !employee_phone || !employee_password
+  ) {
+    return res.status(400).json({
+      msg: "Please provide employee email, first name, last name, and phone number.",
+    });
+  }
 
   const added_date = new Date().toISOString().slice(0, 19).replace("T", " ");
 
   try {
-    // Execute parameterized query
+    // Execute parameterized query using promise-based pool
     const [result] = await pool.query(
       "INSERT INTO employee (employee_email, employee_active_status, employee_added_date) VALUES (?, 1, ?)",
-      [email, added_date]
+      [employee_email, added_date]
+    );
+    const employee_id = result.insertId; // Get the inserted employee ID
+
+    // Insert into the employee_info table
+    await pool.query(
+      "INSERT INTO employee_info (employee_id, employee_first_name, employee_last_name, employee_phone) VALUES (?, ?, ?, ?)",
+      [employee_id, employee_first_name, employee_last_name, employee_phone]
+    );
+    // Insert into the employee_pass table
+    await pool.query(
+      "INSERT INTO employee_pass (employee_id, employee_password) VALUES (?, ?)",
+      [employee_id, employee_password]
     );
 
-    // Send success response
-    return res.status(200).json({
+    return res.status(201).json({
       msg: "Employee added successfully",
-      id: result.insertId, // ID of the inserted record
+      employee_id: employee_id,
     });
   } catch (error) {
     console.error("Error adding employee:", error.message);
     return res.status(500).json({
-      msg: "An unexpected error occurred",
+      msg: "An unexpected error occurred while adding the employee.",
     });
   }
 }
-
-
-// Function to update an employee by ID
-async function updateEmployee(req, res) {
-  const { id } = req.params;
-  const updateData = req.body;
-  if (!id || !updateData.name || !updateData.position) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Please provide employee ID, name, and position" });
-  }
-
+//function to update an employee
+async function updateEmployeeService(req) {
   try {
-    const result = await pool.query(
-      "UPDATE employees SET ? WHERE employee_id = ?",
-      [updateData, id]
-    );
-    if (result[0].affectedRows > 0) {
-      return res
-        .status(StatusCodes.OK)
-        .json({ msg: "Employee updated successfully" });
-    } else {
-      return res
-        .status(StatusCodes.NOT_FOUND)
-        .json({ msg: "Employee not found" });
+    const id = parseInt(req.params.id);
+    if (!id) {
+      throw new Error("Employee ID is required");
     }
+
+    const updateData = { ...req.body };
+
+    // Check if there's data to update
+    if (Object.keys(updateData).length === 0) {
+      throw new Error("No fields provided for update");
+    }
+
+    // Dynamically generate SET clause
+    const fields = Object.keys(updateData)
+      .map((key) => `${key} = ?`)
+      .join(", ");
+    const values = Object.values(updateData);
+
+    // Add the ID to the values array for the WHERE clause
+    values.push(id);
+
+    // Perform the update query
+    const [result] = await pool.query(
+      //update the employee, employee_info and employee_pass table
+
+      `UPDATE employee, employee_info, employee_pass
+      SET ${fields}
+      WHERE employee.employee_id = employee_info.employee_id
+      AND employee.employee_id = employee_pass.employee_id
+      AND employee.employee_id = ?`,
+      values
+      
+    );
+
+    if (result.affectedRows === 0) {
+      // Return null if no rows were updated (employee not found)
+      return null;
+    }
+
+    // Optionally fetch and return the updated employee details
+    const [rows] = await pool.query(
+      "SELECT * FROM employee WHERE employee_id = ?",
+      [id]
+    );
+
+    return rows;
   } catch (error) {
-    console.error(error.message);
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      msg: "Something went wrong, try again later!",
-    });
+    // Throw the error to be handled by the controller
+    throw error;
   }
 }
 
-// Function to delete an employee by ID
-async function deleteEmployee(req, res) {
-  const { id } = req.params;
-  try {
-    await pool.query("DELETE FROM employees WHERE employee_id = ?", [id]);
-    return res
-      .status(StatusCodes.OK)
-      .json({ msg: "Employee deleted successfully" });
-  } catch (error) {
-    console.error(error.message);
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      msg: "Something went wrong, try again later!",
-    });
-  }
-}
+
 
 module.exports = {
-  getAllEmployees,
-  getEmployeeById,
   addEmployee,
-  updateEmployee,
-  deleteEmployee,
+  getAllEmployeeService,
+  getSingleEmployeeService,
+  updateEmployeeService,
 };
- 
-
-
