@@ -2,17 +2,21 @@
 const express = require("express");
 const cors = require("cors");
 const pool = require("./dbconfig/db.config"); // Import the DB pool
-//import service module to create tables
-const service = require("./service/query.module");
+
+//import the router
+const router = require("./routes/index");
 
 // Create a new express application
 const app = express();
+
 
 // Use cors middleware for handling cross-origin requests
 app.use(cors());
 
 // Use json middleware for handling JSON requests
 app.use(express.json());
+//add the router to the application as a middleware
+app.use(router);
 
 // Test database connection using the pool
 pool.getConnection() // Get a connection from the pool
@@ -34,3 +38,4 @@ const PORT = process.env.DB_PORT; // Use the server port from the .env file or d
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+

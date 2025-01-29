@@ -1,82 +1,117 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const { pool } = require("../db");
+const { pool } = require("../dbconfig/db.config");
+//import the addEmployee service
+const {
+  addEmployee,
+  getAllEmployeeService,
+  getSingleEmployeeService,
+  updateEmployeeService,
+} = require("../service/employee.service");
+
+
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 5001;
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
-// Get all employees with optional limit
-app.get("/api/employees", async (req, res) => {
-  try {
-    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-    const [rows] = await pool.query("SELECT * FROM employees LIMIT ?", [limit]);
-    res.status(200).json({
-      limit: limit,
-      contacts: rows,
-    });
-  } catch (error) {
+// Get all employees from the database
+const getAllEmployee = async (req, res) => {
+ try {
+   //calling the service function
+    const rows = await getAllEmployeeService(req, res);
+    if(!rows){
+      res.status(404).json({ message: "Employees not found" });
+    }
+    else{
+      res.status(200).json({
+       
+        employees: rows,
+      });
+    }
+    
+   
+ }
+  catch (error) {
     res.status(500).json({ message: error.message });
   }
-});
+
+
+};
 
 // Get a single employee by ID
-app.get("/api/employee/:id", async (req, res) => {
+const getSingleEmployee= async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const [rows] = await pool.query(
-      "SELECT * FROM employees WHERE employee_id = ?",
-      [id]
-    );
-    if (rows.length > 0) {
-      res.status(200).json(rows[0]);
-    } else {
+   //calling the service function
+    const rows = await getSingleEmployeeService(req, res);
+    if(!rows){
       res.status(404).json({ message: "Employee not found" });
     }
+    else{
+      res.status(200).json({
+        employee: rows[0],
+      });
+    }
+
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }
-});
+  } 
+};
 
 // Add a new employee
-app.post("/api/employee", async (req, res) => {
+const addNewEmployee = async (req, res) => {
   try {
-    const newEmployee = {
-      ...req.body,
-      added_date: new Date().toISOString().slice(0, 19).replace("T", " "), // Ensure added_date is in the correct format
-    };
-    const result = await pool.query("INSERT INTO employees SET ?", newEmployee);
-    res.status(200).json({ success: "true", insertId: result[0].insertId });
+    console.log("Controller Request Body:", req.body); // Debugging log
+     if (!req.body) {
+       throw new Error(
+         "Request body is missing. Ensure express.json() is enabled."
+       );
+     }
+    // Call the service function
+    await addEmployee(req, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Controller Error:", error.message);
+    res.status(500).json({
+      msg: "An unexpected error occurred in the controller",
+    });
   }
-});
+};
+
 
 // Update an existing employee
-app.put("/api/employee/:id", async (req, res) => {
+const updateEmployee = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const updateData = { ...req.body };
-    const result = await pool.query(
-      "UPDATE employees SET ? WHERE employee_id = ?",
-      [updateData, id]
-    );
-    if (result[0].affectedRows > 0) {
-      res.status(200).json({ success: "true" });
-    } else {
-      res.status(404).json({ message: "Employee not found" });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+    // Call the service function
+    const rows = await updateEmployeeService(req);
 
-// Start the server
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+    if (!rows) {
+      // If no rows were updated, return a 404 response
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    // Return the updated employee data
+    return res.status(200).json({
+      employee: rows[0],
+    });
+  } catch (error) {
+    // Handle any unexpected errors
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+
+// Export the functions
+
+module.exports = {
+  getAllEmployee,
+  getSingleEmployee,
+  addNewEmployee,
+  updateEmployee,
+};
+
+  
