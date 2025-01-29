@@ -1,5 +1,5 @@
 // Import mysql2 module
-const mysql = require("mysql2");
+const mysql = require("mysql2/promise");
 // Import dotenv module to read .env file
 require("dotenv").config();
 

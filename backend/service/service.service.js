@@ -27,7 +27,7 @@ import { StatusCodes } from 'http-status-codes';
  async function getService(req, res) {
     try {
         const [services] = await dbPromise.query(
-            'SELECT * FROM common_services WHERE active = 1'
+            'SELECT * FROM common_services'
         );
         return res.status(StatusCodes.OK).json(services);
     } catch (error) {
@@ -42,7 +42,7 @@ import { StatusCodes } from 'http-status-codes';
     const { id } = req.params;
     try {
         const [service] = await dbPromise.query(
-            'SELECT * FROM common_services WHERE service_id = ? AND active = 1', 
+            'SELECT * FROM common_services WHERE service_id = ? ', 
             [id]
         );
         if (service.length === 0) {
@@ -65,8 +65,8 @@ import { StatusCodes } from 'http-status-codes';
 
     try {
         const result = await dbPromise.query(
-            'UPDATE common_services SET service_name = ?, service_description = ?, active = ? WHERE service_id = ?', 
-            [service_name, service_description, active ?? 1, service_id]
+            'UPDATE common_services SET service_name = ?, service_description = ? WHERE service_id = ?', 
+            [service_name, service_description, service_id]
         );
 
         if (result.affectedRows === 0) {
