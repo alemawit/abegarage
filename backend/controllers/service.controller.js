@@ -5,7 +5,9 @@ import { postService, getService, getSingleService, updateService, deleteService
 };
 
  const fetchAllServices = async (req, res) => {
-    await getService(req, res);
+        
+        await getService(req, res);
+    
 };
 
  const fetchSingleService = async (req, res) => {

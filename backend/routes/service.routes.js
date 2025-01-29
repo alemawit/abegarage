@@ -3,12 +3,17 @@ import { createService, fetchAllServices, fetchSingleService, modifyService, rem
 
 const router = express.Router();
 // Create service
-router.post('/services', createService); 
+router.post('/api/services', createService); 
 // Get all services
-router.get('/services', fetchAllServices); 
+router.get('/api/services', fetchAllServices); 
 // Get single service
-router.get('/services/:id', fetchSingleService); 
+router.get('/api/services/:id', fetchSingleService); 
 // Update service
-router.put('/services', modifyService);
+router.put('/api/services', modifyService);
 // Delete service 
-router.delete('/services/:id', removeService); 
+router.delete('/api/services/:id', removeService); 
+// connection details
+// DB_HOST=127.0.0.1
+// DB_DATABASE=abegarage
+// DB_USERNAME=abegarage
+// DB_PASSWORD=OvNMpaxpLZpoU3kg
