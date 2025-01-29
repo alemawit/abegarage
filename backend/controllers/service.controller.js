@@ -1,4 +1,4 @@
-import { postService, getService, getSingleService, updateService, deleteService } from '../service';
+const { postService, getService, getSingleService, updateService, deleteService } =require('../service/service.service');
 
  const createService = async (req, res) => {
     await postService(req, res);
@@ -21,4 +21,4 @@ import { postService, getService, getSingleService, updateService, deleteService
  const removeService = async (req, res) => {
     await deleteService(req, res);
 };
-export { createService, fetchAllServices, fetchSingleService, modifyService, removeService };
+module.exports ={ createService, fetchAllServices, fetchSingleService, modifyService, removeService };

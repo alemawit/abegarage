@@ -8,8 +8,14 @@ const installRouter = require('./install.routes');
 //add the install router to the main routes
 //import the employee router
 const employeeRouter = require('./employee.routes');
+//import the customer router
+const customerRouter = require('./customer.routes');
+//import service router
+const serviceRouter = require('./service.routes');
 //add the employee router to the main routes
 router.use(employeeRouter);
 router.use(installRouter);
+router.use(customerRouter);
+router.use(serviceRouter);
 //export the router
 module.exports = router;

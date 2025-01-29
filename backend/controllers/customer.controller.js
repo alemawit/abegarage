@@ -1,5 +1,6 @@
 // Import the customer service
-import customerService from '../services/customerService.js';
+// import customerService from '../services/customerService.js';
+const customerService= require('../service/customer.service');
 //Customer Controller (for the customer_identifier and customer_info tables)
 // Create the add customer controller
 const createCustomer = async(req, res, next)=> {
@@ -67,7 +68,7 @@ const getCustomerBySearch=async(req, res, next) => {
 //create the getCustomerByEmail controller
 const getCustomerById=async(req, res, next) => {
   // Call the getCustomerByEmail method from the customer service 
-  const customers = await customerService.getCustomerByEmail(req.body.customer_id);
+  const customers = await customerService.getCustomerById(req.params.id);
   // console.log(customers);
   if (!customers) {
     res.status(400).json({
@@ -83,7 +84,7 @@ const getCustomerById=async(req, res, next) => {
 // Create the updateCustomer controller
 const updateCustomer = async (req, res, next) => {
   // Validate input data (e.g., customer_email or customer_id must be provided)
-  const { customer_email, customer_id, customer_info } = req.body;
+  const { customer_email, customer_id } = req.body;
   if (!customer_email && !customer_id) {
     return res.status(400).json({
       error: "Customer email or ID must be provided to update the customer."
@@ -100,7 +101,8 @@ const updateCustomer = async (req, res, next) => {
     }
 
     // Proceed with updating the customer
-    const updatedCustomer = await customerService.updateCustomer(customer_id, customer_info);
+     const customer_info = { ...req.body };
+    const updatedCustomer = await customerService.updateCustomer(req.params.id, customer_info);
 
     if (!updatedCustomer) {
       return res.status(400).json({
@@ -161,7 +163,7 @@ const deleteCustomer = async (req, res, next) => {
   }
 }
 // Export the controllers
-const customerController = {
+module.exports= {
   createCustomer,
   getAllCustomers,
   getCustomerBySearch,
@@ -170,5 +172,4 @@ const customerController = {
   deleteCustomer,
 };
 
-export default customerController;
 

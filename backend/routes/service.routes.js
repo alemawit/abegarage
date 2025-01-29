@@ -1,6 +1,5 @@
-import express from 'express';
-import { createService, fetchAllServices, fetchSingleService, modifyService, removeService } from '../controllers/service.controller';
-
+const express = require('express');
+const { createService, fetchAllServices, fetchSingleService, modifyService, removeService } = require('../controllers/service.controller');
 const router = express.Router();
 // Create service
 router.post('/api/services', createService); 
@@ -17,3 +16,4 @@ router.delete('/api/services/:id', removeService);
 // DB_DATABASE=abegarage
 // DB_USERNAME=abegarage
 // DB_PASSWORD=OvNMpaxpLZpoU3kg
+module.exports = router;
