@@ -1,40 +1,65 @@
-// Import the query function from the db.config.js file 
-// import conn from "../config/dbConfig";
-// Import the bcrypt module to do the password comparison 
-import bcrypt from 'bcrypt';
-// Import the employee service to get employee by email  
-import employeeService from "./employeeService.js";
-// Handle employee login 
-const  logIn= async(employeeData) =>{
+const bcrypt = require("bcrypt");
+const employeeService = require("../service/employee.service");
+
+const logIn = async (employeeData) => {
   try {
     let returnData = {}; // Object to be returned
-    const employee = await employeeService.getEmployeeByEmail(employeeData.employee_email);
-    // console.log(employee)
+    const employee = await employeeService.getEmployeeByEmailService(
+      employeeData.employee_email
+    );
+
     if (employee.length === 0) {
       returnData = {
         status: "fail",
-        message: "Employee does not exist"
+        message: "Employee does not exist",
       };
       return returnData;
     }
-    const passwordMatch = await bcrypt.compare(employeeData.employee_password, employee[0].employee_password_hashed);
-    console.log(passwordMatch);
+
+    console.log("Employee Password:", employeeData.employee_password); // Debug
+    console.log(
+      "Stored Hashed Password:",
+      employee[0].employee_password
+    ); // Debug
+
+    // Ensure the password data exists
+    if (
+      !employeeData.employee_password ||
+      !employee[0].employee_password
+    ) {
+      returnData = {
+        status: "fail",
+        message: "Missing password data",
+      };
+      return returnData;
+    }
+
+    const passwordMatch = await bcrypt.compare(
+      employeeData.employee_password,
+      employee[0].employee_password
+    );
+    console.log("Password Match:", passwordMatch); // Debug
+
     if (!passwordMatch) {
       returnData = {
         status: "fail",
-        message: "Incorrect password"
+        message: "Incorrect password",
       };
       return returnData;
     }
+
     returnData = {
       status: "success",
-      data: employee[0]
+      data: employee[0],
     };
     return returnData;
   } catch (error) {
     console.log(error);
+    return {
+      status: "fail",
+      message: "An error occurred during login",
+    };
   }
-}
+};
 
-// Export the function 
-export default logIn;
+module.exports = logIn;

@@ -82,6 +82,21 @@ const addNewEmployee = async (req, res) => {
   }
 };
 
+//get all employees by email
+const getEmployeeByEmail = async (req, res) => {
+  try {
+    // Call the service function
+    const rows = await getEmployeeByEmailService(req.params.email);
+
+    // Return the employees
+    return res.status(200).json({
+      employees: rows,
+    });
+  } catch (error) {
+    // Handle any unexpected errors
+    return res.status(500).json({ message: error.message });
+  }
+};
 
 // Update an existing employee
 const updateEmployee = async (req, res) => {
@@ -112,6 +127,7 @@ module.exports = {
   getSingleEmployee,
   addNewEmployee,
   updateEmployee,
+  getEmployeeByEmail,
 };
 
   

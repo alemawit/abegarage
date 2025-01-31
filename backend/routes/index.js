@@ -14,11 +14,14 @@ const customerRouter = require('./customer.routes');
 const serviceRouter = require('./service.routes');
 //import vehicle router
 const vehicleRouter = require('./vehicle.routes');
+//import login router
+const loginRouter = require('./login.routes');
 //add the employee router to the main routes
 router.use(employeeRouter);
 router.use(installRouter);
 router.use(customerRouter);
 router.use(serviceRouter);
 router.use(vehicleRouter)
+router.use(loginRouter);
 //export the router
 module.exports = router;

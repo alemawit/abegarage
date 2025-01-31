@@ -2,20 +2,32 @@
 const pool = require ("../dbconfig/db.config.js");
 
 // A function to check if a vehicle exists in the database based on the vehicle's serial
-const checkIfVehicleExists = async (vehicle_serial) => {
-  const query = "SELECT * FROM customer_vehicle_info WHERE vehicle_serial = ?";
-  const [rows] = await pool.query(query, [vehicle_serial]);
+const checkIfVehicleExists = async (vehicle_serial_number) => {
+  const query = "SELECT * FROM customer_vehicle_info WHERE vehicle_serial_number = ?";
+  const [rows] = await pool.query(query, [vehicle_serial_number]);
   if (rows.length > 0) {
     return true;
   }
   return false;
 }
 // A function to create a new vehicle
+// A function to create a new vehicle
 const createVehicle = async (vehicle) => {
-  let createdVehicle = {};
+  let createdVehicle = null;
   try {
-    const query = "INSERT INTO customer_vehicle_info (customer_id, vehicle_year, vehicle_make, vehicle_model, vehicle_type, vehicle_mileage, vehicle_tag, vehicle_serial, vehicle_color) VALUES (?,?,?,?,?,?,?,?,?)";
-    const rows = await pool.query(query, [
+    // Ensure the customer exists
+    const customerQuery =
+      "SELECT customer_id FROM customer_identifier WHERE customer_id = ?";
+    const [customers] = await pool.query(customerQuery, [vehicle.customer_id]);
+
+    if (!customers[0]) {
+      throw new Error("Customer not found, cannot insert vehicle");
+    }
+
+    // Insert vehicle information
+    const query =
+      "INSERT INTO customer_vehicle_info (customer_id, vehicle_year, vehicle_make, vehicle_model, vehicle_type, vehicle_mileage, vehicle_tag, vehicle_serial_number, vehicle_color) VALUES (?,?,?,?,?,?,?,?,?)";
+    const [result] = await pool.query(query, [
       vehicle.customer_id,
       vehicle.vehicle_year,
       vehicle.vehicle_make,
@@ -23,12 +35,13 @@ const createVehicle = async (vehicle) => {
       vehicle.vehicle_type,
       vehicle.vehicle_mileage,
       vehicle.vehicle_tag,
-      vehicle.vehicle_serial,
+      vehicle.vehicle_serial_number,
       vehicle.vehicle_color,
     ]);
-    
+
+    // Construct the vehicle object to return
     createdVehicle = {
-      vehicle_id: rows.insertId,
+      vehicle_id: result.insertId,
       customer_id: vehicle.customer_id,
       vehicle_year: vehicle.vehicle_year,
       vehicle_make: vehicle.vehicle_make,
@@ -36,14 +49,16 @@ const createVehicle = async (vehicle) => {
       vehicle_type: vehicle.vehicle_type,
       vehicle_mileage: vehicle.vehicle_mileage,
       vehicle_tag: vehicle.vehicle_tag,
-      vehicle_serial: vehicle.vehicle_serial,
+      vehicle_serial_number: vehicle.vehicle_serial_number,
       vehicle_color: vehicle.vehicle_color,
     };
   } catch (error) {
-    console.log(error);
+    console.error("Error inserting vehicle:", error.message);
   }
-  return createdVehicle;
-}
+  return createdVehicle; // Returns the created vehicle object or null if error occurred
+};
+
+
 // A function to get all vehicles for a specific customer
 const getVehiclesByCustomerId = async (customer_id) => {
   const query = "SELECT * FROM customer_vehicle_info WHERE customer_id = ?";
@@ -68,7 +83,7 @@ const updateVehicle = async (vehicle_id, vehicle) => {
   try {
     const query = `
       UPDATE customer_vehicle_info 
-      SET customer_id = ?, vehicle_year = ?, vehicle_make = ?, vehicle_model = ?, vehicle_type = ?, vehicle_mileage = ?, vehicle_tag = ?, vehicle_serial = ?, vehicle_color = ? WHERE vehicle_id = ?
+      SET customer_id = ?, vehicle_year = ?, vehicle_make = ?, vehicle_model = ?, vehicle_type = ?, vehicle_mileage = ?, vehicle_tag = ?, vehicle_serial_number = ?, vehicle_color = ? WHERE vehicle_id = ?
     `;
     const infoParams= [
       vehicle.customer_id,
@@ -78,7 +93,7 @@ const updateVehicle = async (vehicle_id, vehicle) => {
       vehicle.vehicle_type,
       vehicle.vehicle_mileage,
       vehicle.vehicle_tag,
-      vehicle.vehicle_serial,
+      vehicle.vehicle_serial_number,
       vehicle.vehicle_color,
       vehicle_id
     ];
@@ -92,7 +107,7 @@ const updateVehicle = async (vehicle_id, vehicle) => {
         vehicle_type: vehicle.vehicle_type,
         vehicle_mileage: vehicle.vehicle_mileage,
         vehicle_tag: vehicle.vehicle_tag,
-        vehicle_serial: vehicle.vehicle_serial,
+        vehicle_serial_number: vehicle.vehicle_serial_number,
         vehicle_color: vehicle.vehicle_color,
       };
    

@@ -1,7 +1,7 @@
 // Import the login service 
-import loginService from'../services/loginService.js';
+const loginService = require("../service/login.service");
 // Import the jsonwebtoken module
-import jwt from "jsonwebtoken";
+const jwt = require("jsonwebtoken");
 // Import the secret key from the environment variables
 const jwtSecret = process.env.JWT_SECRET;
 
@@ -45,4 +45,4 @@ const logIn=async(req, res, next)=> {
 }
 
 // Export the functions 
-export default logIn;
+module.exports = logIn;

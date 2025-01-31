@@ -72,15 +72,18 @@ CREATE TABLE IF NOT EXISTS common_services (
 );
 
 CREATE TABLE IF NOT EXISTS orders (
-    order_id INT AUTO_INCREMENT PRIMARY KEY,
-    customer_id INT NOT NULL,
-    employee_id INT NOT NULL,
-    order_date DATETIME NOT NULL,
-    order_hash VARCHAR(255) NOT NULL,
-    order_status VARCHAR(255) NOT NULL,
-    FOREIGN KEY (customer_id) REFERENCES customer_identifier(customer_id) ON DELETE CASCADE,
-    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE
+  order_id INT AUTO_INCREMENT PRIMARY KEY,
+  customer_id INT NOT NULL,
+  employee_id INT NOT NULL,
+  vehicle_id INT NOT NULL,
+  order_date DATETIME NOT NULL,
+  active_order INT(11) NOT NULL,
+  order_hash VARCHAR(255) NOT NULL,
+  FOREIGN KEY (customer_id) REFERENCES customer_identifier(customer_id) ON DELETE CASCADE,
+  FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE,
+  FOREIGN KEY (vehicle_id) REFERENCES customer_vehicle_info(vehicle_id) ON DELETE CASCADE
 );
+
 
 CREATE TABLE IF NOT EXISTS order_info (
     order_info_id INT AUTO_INCREMENT PRIMARY KEY,

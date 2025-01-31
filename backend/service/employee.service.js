@@ -1,5 +1,7 @@
 const  pool  = require("../dbconfig/db.config");
 const { StatusCodes } = require("http-status-codes");
+//import bcrypt
+const bcrypt = require("bcrypt");
 
 // function to get all employees
 async function getAllEmployeeService(req, res) {
@@ -78,10 +80,14 @@ async function addEmployee(req, res) {
       "INSERT INTO employee_info (employee_id, employee_first_name, employee_last_name, employee_phone) VALUES (?, ?, ?, ?)",
       [employee_id, employee_first_name, employee_last_name, employee_phone]
     );
+    //hash the employee password
+    const hashedPassword = await bcrypt.hash(employee_password, 10);
+   
+
     // Insert into the employee_pass table
     await pool.query(
       "INSERT INTO employee_pass (employee_id, employee_password) VALUES (?, ?)",
-      [employee_id, employee_password]
+      [employee_id, hashedPassword]
     );
 
     return res.status(201).json({
@@ -94,6 +100,23 @@ async function addEmployee(req, res) {
       msg: "An unexpected error occurred while adding the employee.",
     });
   }
+}
+//function to get all employees by email
+async function getEmployeeByEmailService(employee_email) {
+  try {
+    //select all email from the employee table and employee_pass from employee_pass table
+    const [rows] = await pool.query(
+      "SELECT employee.employee_id, employee.employee_email, employee_pass.employee_password FROM employee INNER JOIN employee_pass ON employee.employee_id = employee_pass.employee_id WHERE employee.employee_email = ?",
+      [employee_email]
+    );
+    return rows;
+    
+}
+
+catch (error) {
+  console.error("Error getting employee by email:", error.message);
+  return null;
+}
 }
 //function to update an employee
 async function updateEmployeeService(req) {
@@ -129,7 +152,7 @@ async function updateEmployeeService(req) {
       AND employee.employee_id = employee_pass.employee_id
       AND employee.employee_id = ?`,
       values
-      
+
     );
 
     if (result.affectedRows === 0) {
@@ -157,4 +180,5 @@ module.exports = {
   getAllEmployeeService,
   getSingleEmployeeService,
   updateEmployeeService,
+  getEmployeeByEmailService,
 };
