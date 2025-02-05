@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS order_info (
     order_estimated_completion_date DATETIME,
     order_completion_date DATETIME,
     order_additional_requests VARCHAR(255),
-    order_additional_requests_completed INT,
+    order_additional_requests_completed VARCHAR(255),
     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
 );
 
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS order_services (
     order_service_id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,
     service_id INT NOT NULL,
-    service_completed INT NOT NULL,
+    service_completed VARCHAR(255),
     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
     FOREIGN KEY (service_id) REFERENCES common_services(service_id) ON DELETE CASCADE
 );

@@ -1,4 +1,4 @@
-const pool = require("../config/pool.config");
+const pool = require("../dbconfig/db.config");
 const crypto = require("crypto");
 
 // Generate order hash
@@ -12,29 +12,36 @@ const createOrderService = async (
   customer_id,
   employee_id,
   order_status,
-  order_data
+  order_data,
+  vehicle_id // Add vehicle_id to the function parameters
 ) => {
+  // Destructure order_data
   const {
     order_total_price,
     order_estimated_completion_date,
+    order_completion_date,
     order_additional_requests,
+
     order_additional_requests_completed,
     service_id,
     service_completed,
   } = order_data;
 
-  const order_date = new Date();
+  // Log order data for debugging
+  console.log("Order data received:", order_data);
+
+  const order_date = new Date().toISOString().slice(0, 19).replace("T", " ");
   const order_hash = generateOrderHash(customer_id, employee_id, order_date);
 
-  // Write query to insert into orders table
+  // Write query to insert into orders table (including vehicle_id)
   const query = `
-    INSERT INTO orders (customer_id, employee_id, order_date, order_hash)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO orders (customer_id, employee_id, order_date, order_hash, vehicle_id)
+    VALUES (?, ?, ?, ?, ?)
   `;
 
   const query2 = `
-    INSERT INTO order_info (order_id, order_total_price, order_estimated_completion_date, order_additional_requests, order_additional_requests_completed)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO order_info (order_id, order_total_price,order_completion_date, order_estimated_completion_date, order_additional_requests, order_additional_requests_completed)
+    VALUES (?, ?, ?, ?, ?, ?)
   `;
 
   const query3 = `
@@ -48,12 +55,13 @@ const createOrderService = async (
   `;
 
   try {
-    // Start by inserting into the orders table
+    // Insert into orders table, including vehicle_id
     const [result] = await pool.execute(query, [
       customer_id,
       employee_id,
       order_date,
       order_hash,
+      vehicle_id, // Pass vehicle_id here
     ]);
     const order_id = result.insertId;
 
@@ -62,6 +70,7 @@ const createOrderService = async (
       order_id,
       order_total_price,
       order_estimated_completion_date,
+      order_completion_date,
       order_additional_requests,
       order_additional_requests_completed,
     ]);
@@ -80,6 +89,9 @@ const createOrderService = async (
     throw err;
   }
 };
+
+
+
 
 // Get all orders
 const getAllOrdersService = async () => {
