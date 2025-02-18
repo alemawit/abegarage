@@ -17,7 +17,7 @@ function LoginForm() {
   return (
     <div className="login-container">
       <h2>
-        Login to your account <span style={{ color: 'red' }}>__</span>
+        Login to your account <span style={{ color: "#EE0D0A" }}>__</span>
       </h2>
       <form onSubmit={handleSubmit}>
         <div
