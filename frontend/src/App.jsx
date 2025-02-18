@@ -7,6 +7,8 @@ import AddEmployee from './markup/pages/Admin/AddEmployee'
 import Header from './markup/components/Header/Header';
 import "./App.css"
 import Footer from './markup/components/Footer/Footer';
+import Services from './markup/pages/Services';
+import About from './markup/pages/about';
 
 
 
@@ -22,6 +24,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin/add-Employee" element={<AddEmployee />} />
+        <Route path='/services' element={<Services/>}/>
+        <Route path='/about' element={<About/>}/>
       </Routes>
       <Footer/>
     </>

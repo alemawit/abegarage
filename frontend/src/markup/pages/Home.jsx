@@ -13,7 +13,7 @@ function Home() {
           style={{
             backgroundImage: `url('../../assets/images/banner/banner.jpg')`,
           }}
-        >
+         >
           <img src={banner} alt="" />
         </div>
         <div className="auto-container">
