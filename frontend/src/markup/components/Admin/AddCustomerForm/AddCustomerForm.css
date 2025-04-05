@@ -1,0 +1,114 @@
+/* Form Container Styling */
+.external-container {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 20px auto;
+}
+
+/* Title Styling */
+.contact-title h2 {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Input Fields */
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: border 0.3s ease-in-out;
+}
+
+input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+/* Placeholder Styling */
+input::placeholder {
+  font-style: italic;
+  color: #666;
+}
+
+/* Validation Errors */
+.validation-error {
+  color: red;
+  font-size: 14px;
+  font-style: italic;
+  margin-top: 5px;
+  text-align: left;
+}
+
+/* Button Styling */
+.theme-btn.btn-style-one {
+  display: block;
+  width: 100%;
+  background-color: #007bff;
+  color: white;
+  padding: 12px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin-top: 10px;
+}
+
+.theme-btn.btn-style-one:hover {
+  background-color: #0056b3;
+}
+
+/* Adjusting Layout for Form Column */
+.form-column {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+/* Button Styling */
+.theme-btn.btn-style-one {
+  display: block;
+  width: 100%;
+  background-color: #dc3545; /* Red Color */
+  color: white;
+  padding: 12px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin-top: 10px;
+}
+
+.theme-btn.btn-style-one:hover {
+  background-color: #b02a37; /* Darker Red on Hover */
+}
+
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .external-container {
+    max-width: 90%;
+    padding: 15px;
+  }
+
+  input {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .theme-btn.btn-style-one {
+    font-size: 14px;
+    padding: 10px;
+  }
+}
