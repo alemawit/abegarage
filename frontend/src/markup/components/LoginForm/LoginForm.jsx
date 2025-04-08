@@ -1,17 +1,46 @@
 import React, { useState } from "react";
-import "./LoginForm.css"; // Make sure to import your CSS file
+import "./LoginForm.css";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailFocus, setEmailFocus] = useState(false);
   const [passwordFocus, setPasswordFocus] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle the form submission logic
-    console.log("Email:", email);
-    console.log("Password:", password);
+    setLoading(true);
+    setErrorMessage("");
+
+    try {
+      const response = await fetch("http://localhost:8000/api/employee/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("Login success:", data);
+        // Optional: Save token to localStorage
+        // localStorage.setItem("token", data.token);
+        // Optional: Redirect
+        // navigate("/dashboard");
+        alert("Login successful!");
+      } else {
+        setErrorMessage(data.message || "Login failed.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setErrorMessage("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,7 +83,11 @@ function LoginForm() {
           />
         </div>
 
-        <button type="submit">Login</button>
+        {errorMessage && <p className="error-message">{errorMessage}</p>}
+
+        <button type="submit" disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
+        </button>
       </form>
     </div>
   );
