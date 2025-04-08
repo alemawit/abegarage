@@ -68,7 +68,9 @@ CREATE TABLE IF NOT EXISTS customer_vehicle_info (
 CREATE TABLE IF NOT EXISTS common_services (
     service_id INT AUTO_INCREMENT PRIMARY KEY,
     service_name VARCHAR(255) NOT NULL,
-    service_description VARCHAR(255)
+    service_description VARCHAR(255),
+    service_price DECIMAL(10, 2) DEFAULT 0.00, 
+    active_service BOOLEAN DEFAULT TRUE         
 );
 
 CREATE TABLE IF NOT EXISTS orders (
@@ -79,6 +81,10 @@ CREATE TABLE IF NOT EXISTS orders (
   order_date DATETIME NOT NULL,
   active_order INT(11) NOT NULL,
   order_hash VARCHAR(255) NOT NULL,
+  order_description VARCHAR(255),
+  estimated_completion_date DATETIME, 
+  order_completed DATETIME,
+  order_total_price DECIMAL(10, 2) NOT NULL,
   FOREIGN KEY (customer_id) REFERENCES customer_identifier(customer_id) ON DELETE CASCADE,
   FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE,
   FOREIGN KEY (vehicle_id) REFERENCES customer_vehicle_info(vehicle_id) ON DELETE CASCADE
@@ -88,10 +94,12 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE TABLE IF NOT EXISTS order_info (
     order_info_id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,
-    order_total_price INT NOT NULL,
+    order_total_price DECIMAL(10, 2) NOT NULL,
     order_estimated_completion_date DATETIME,
     order_completion_date DATETIME,
     order_additional_requests VARCHAR(255),
+    notes_for_internal_use TEXT,
+    notes_for_customer TEXT,
     order_additional_requests_completed VARCHAR(255),
     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
 );
