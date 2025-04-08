@@ -1,5 +1,5 @@
-import db from "../dbconfig/db.config.js";
-import crypto from "crypto";
+const pool = require("../dbconfig/db.config");
+const crypto = require("crypto");
 
 // Generate order hash
 const generateOrderHash = (customerId, employeeId, orderDate) => {
@@ -8,87 +8,139 @@ const generateOrderHash = (customerId, employeeId, orderDate) => {
 };
 
 // Create a new order
-const createOrderService = async (customer_id, employee_id, order_status) => {
-  const order_date = new Date();
+const createOrderService = async (
+  customer_id,
+  employee_id,
+  order_status,
+  order_data,
+  vehicle_id // Add vehicle_id to the function parameters
+) => {
+  // Destructure order_data
+  const {
+    order_total_price,
+    order_estimated_completion_date,
+    order_completion_date,
+    order_additional_requests,
+
+    order_additional_requests_completed,
+    service_id,
+    service_completed,
+  } = order_data;
+
+  // Log order data for debugging
+  console.log("Order data received:", order_data);
+
+  const order_date = new Date().toISOString().slice(0, 19).replace("T", " ");
   const order_hash = generateOrderHash(customer_id, employee_id, order_date);
 
+  // Write query to insert into orders table (including vehicle_id)
   const query = `
-    INSERT INTO orders (customer_id, employee_id, order_date, order_hash, order_status)
+    INSERT INTO orders (customer_id, employee_id, order_date, order_hash, vehicle_id)
     VALUES (?, ?, ?, ?, ?)
   `;
 
-  return new Promise((resolve, reject) => {
-    db.execute(
-      query,
-      [customer_id, employee_id, order_date, order_hash, order_status],
-      (err, result) => {
-        if (err) {
-          return reject(err);
-        }
-        resolve({
-          order_id: result.insertId,
-          customer_id,
-          employee_id,
-          order_date,
-          order_hash,
-          order_status,
-        });
-      }
-    );
-  });
+  const query2 = `
+    INSERT INTO order_info (order_id, order_total_price,order_completion_date, order_estimated_completion_date, order_additional_requests, order_additional_requests_completed)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `;
+
+  const query3 = `
+    INSERT INTO order_services (order_id, service_id, service_completed)
+    VALUES (?, ?, ?)
+  `;
+
+  const query4 = `
+    INSERT INTO order_status (order_id, order_status)
+    VALUES (?, ?)
+  `;
+
+  try {
+    // Insert into orders table, including vehicle_id
+    const [result] = await pool.execute(query, [
+      customer_id,
+      employee_id,
+      order_date,
+      order_hash,
+      vehicle_id, // Pass vehicle_id here
+    ]);
+    const order_id = result.insertId;
+
+    // Insert into order_info table
+    await pool.execute(query2, [
+      order_id,
+      order_total_price,
+      order_estimated_completion_date,
+      order_completion_date,
+      order_additional_requests,
+      order_additional_requests_completed,
+    ]);
+
+    // Insert into order_services table
+    if (service_id && service_completed !== undefined) {
+      await pool.execute(query3, [order_id, service_id, service_completed]);
+    }
+
+    // Insert into order_status table
+    await pool.execute(query4, [order_id, order_status]);
+
+    return { order_id, order_hash };
+  } catch (err) {
+    console.error("Error creating order:", err);
+    throw err;
+  }
 };
+
+
+
 
 // Get all orders
 const getAllOrdersService = async () => {
   const query = "SELECT * FROM orders";
 
-  return new Promise((resolve, reject) => {
-    db.execute(query, (err, results) => {
-      if (err) {
-        return reject(err);
-      }
-      resolve(results);
-    });
-  });
+  try {
+    const [results] = await pool.execute(query);
+    return results;
+  } catch (err) {
+    console.error("Error fetching orders:", err);
+    throw err;
+  }
 };
 
 // Get an order by ID
 const getOrderByIdService = async (order_id) => {
   const query = "SELECT * FROM orders WHERE order_id = ?";
 
-  return new Promise((resolve, reject) => {
-    db.execute(query, [order_id], (err, results) => {
-      if (err) {
-        return reject(err);
-      }
-      if (results.length === 0) {
-        return reject(new Error("Order not found"));
-      }
-      resolve(results[0]);
-    });
-  });
+  try {
+    const [results] = await pool.execute(query, [order_id]);
+    if (results.length === 0) {
+      throw new Error("Order not found");
+    }
+    return results[0];
+  } catch (err) {
+    console.error("Error fetching order by ID:", err);
+    throw err;
+  }
 };
 
 // Delete an order by ID
 const deleteOrderService = async (order_id) => {
   const query = "DELETE FROM orders WHERE order_id = ?";
 
-  return new Promise((resolve, reject) => {
-    db.execute(query, [order_id], (err, result) => {
-      if (err) {
-        return reject(err);
-      }
-      if (result.affectedRows === 0) {
-        return reject(new Error("Order not found"));
-      }
-      resolve({ message: "Order deleted successfully" });
-    });
-  });
+  try {
+    const [result] = await pool.execute(query, [order_id]);
+    if (result.affectedRows === 0) {
+      throw new Error("Order not found");
+    }
+    return { message: "Order deleted successfully" };
+  } catch (err) {
+    console.error("Error deleting order:", err);
+    throw err;
+  }
 };
 
-export {
+module.exports = {
   createOrderService,
-  getAllOrdersService,
   getOrderByIdService,
+  getAllOrdersService,
   deleteOrderService,
 };

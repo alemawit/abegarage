@@ -1,30 +1,53 @@
-import {
-  createOrderService,
-  getAllOrdersService,
-  getOrderByIdService,
-  deleteOrderService,
-} from "../service/order.service.js";
+//import order from order.service
+const { createOrderService, getOrderByIdService, getAllOrdersService, deleteOrderService } = require('../service/order.service');
 
 // Create a new order
 const createOrder = async (req, res) => {
-  const { customer_id, employee_id, order_status } = req.body;
-
-  // Validate input
-  if (!customer_id || !employee_id || !order_status) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
-
   try {
+    console.log("Received Request Body:", req.body); // ✅ Debugging log
+
+    const { customer_id, employee_id, order_status, order_data, vehicle_id } =
+      req.body;
+
+    // ✅ Validate input with detailed error messages
+    if (!customer_id)
+      return res.status(400).json({ error: "customer_id is required" });
+    if (!employee_id)
+      return res.status(400).json({ error: "employee_id is required" });
+    if (!order_status)
+      return res.status(400).json({ error: "order_status is required" });
+    if (!vehicle_id)
+      return res.status(400).json({ error: "vehicle_id is required" });
+    if (!order_data || typeof order_data !== "object") {
+      return res
+        .status(400)
+        .json({ error: "order_data must be a valid object" });
+    }
+
+    // You can also check if the `vehicle_id` exists in the database before proceeding
+    // Example:
+    // const vehicleExists = await checkVehicleExistence(vehicle_id);
+    // if (!vehicleExists) {
+    //   return res.status(400).json({ error: "vehicle_id does not exist in the database" });
+    // }
+
     const order = await createOrderService(
       customer_id,
       employee_id,
-      order_status
+      order_status,
+      order_data,
+      vehicle_id // Pass vehicle_id to the service function
     );
+
     return res.status(201).json(order);
   } catch (err) {
+    console.error("Error creating order:", err); // ✅ Log the full error
     return res.status(500).json({ error: err.message });
   }
 };
+
+
+
 
 // Get a specific order
 const getOrderById = async (req, res) => {
@@ -66,9 +89,4 @@ const deleteOrder = async (req, res) => {
   }
 };
 
-export default {
-  createOrder,
-  getOrderById,
-  getAllOrders,
-  deleteOrder,
-};
+module.exports = {  createOrder, getOrderById, getAllOrders, deleteOrder };

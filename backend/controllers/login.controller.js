@@ -1,7 +1,7 @@
 // Import the login service 
-import loginService from'../services/loginService.js';
+const loginService = require("../service/login.service");
 // Import the jsonwebtoken module
-import jwt from "jsonwebtoken";
+const jwt = require("jsonwebtoken");
 // Import the secret key from the environment variables
 const jwtSecret = process.env.JWT_SECRET;
 
@@ -11,7 +11,7 @@ const logIn=async(req, res, next)=> {
     console.log(req.body);
     const employeeData = req.body;
     // Call the logIn method from the login service 
-    const employee = await loginService(employeeData);
+    const employee = await loginService.logIn(employeeData);
     // If the employee is not found
     if (employee.status === "fail") {
       res.status(403).json({
@@ -45,4 +45,4 @@ const logIn=async(req, res, next)=> {
 }
 
 // Export the functions 
-export default logIn;
+module.exports = logIn;

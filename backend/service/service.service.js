@@ -1,5 +1,5 @@
-import { dbPromise } from '../dbconfig/db.config';
-import { StatusCodes } from 'http-status-codes';
+const  pool  = require('../dbconfig/db.config');
+const { StatusCodes } = require('http-status-codes');
 
  async function postService(req, res) {
     const { service_name, service_description } = req.body;
@@ -9,8 +9,8 @@ import { StatusCodes } from 'http-status-codes';
             .json({ msg: 'Please provide a service name' });
     }
     try {
-        await dbPromise.query(
-            'INSERT INTO common_services (service_name, service_description, active) VALUES (?, ?, 1)', 
+        await pool.query(
+            'INSERT INTO common_services (service_name, service_description) VALUES (?, ?)', 
             [service_name, service_description]
         );
         return res
@@ -26,8 +26,8 @@ import { StatusCodes } from 'http-status-codes';
 
  async function getService(req, res) {
     try {
-        const [services] = await dbPromise.query(
-            'SELECT * FROM common_services WHERE active = 1'
+        const [services] = await pool.query(
+            'SELECT * FROM common_services'
         );
         return res.status(StatusCodes.OK).json(services);
     } catch (error) {
@@ -41,8 +41,8 @@ import { StatusCodes } from 'http-status-codes';
  async function getSingleService(req, res) {
     const { id } = req.params;
     try {
-        const [service] = await dbPromise.query(
-            'SELECT * FROM common_services WHERE service_id = ? AND active = 1', 
+        const [service] = await pool.query(
+            'SELECT * FROM common_services WHERE service_id = ? ', 
             [id]
         );
         if (service.length === 0) {
@@ -58,15 +58,17 @@ import { StatusCodes } from 'http-status-codes';
 }
 
  async function updateService(req, res) {
-    const { service_id, service_name, service_description, active } = req.body;
-    if (!service_id || !service_name) {
-        return res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Service ID and name are required' });
+    const {service_id, service_name, service_description } = req.body;
+    if (!service_id) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ msg: "Service ID required" });
     }
 
     try {
-        const result = await dbPromise.query(
-            'UPDATE common_services SET service_name = ?, service_description = ?, active = ? WHERE service_id = ?', 
-            [service_name, service_description, active ?? 1, service_id]
+        const result = await pool.query(
+          "UPDATE common_services SET service_name = ?, service_description = ? WHERE service_id = ?",
+          [service_name, service_description, service_id]
         );
 
         if (result.affectedRows === 0) {
@@ -85,7 +87,7 @@ import { StatusCodes } from 'http-status-codes';
  async function deleteService(req, res) {
     const { id } = req.params;
     try {
-        await dbPromise.query('DELETE FROM common_services WHERE service_id = ?', [id]);
+        await pool.query('DELETE FROM common_services WHERE service_id = ?', [id]);
         return res.status(StatusCodes.OK).json({ msg: 'Service deleted successfully' });
     } catch (error) {
         console.error(error.message);
@@ -94,4 +96,4 @@ import { StatusCodes } from 'http-status-codes';
         });
     }
 }
-export { postService, getService, getSingleService, updateService, deleteService };
+module.exports= { postService, getService, getSingleService, updateService, deleteService };

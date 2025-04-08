@@ -1,13 +1,13 @@
-import express from 'express';
+const express = require('express');
 // Call the router method from express to create the router
 const router = express.Router();
 // Import the order controller
-import orderController from '../controllers/orderController.js';
+const {createOrder,getAllOrders,getOrderById} = require('../controllers/order.controller');
 // Import the auth middleware
 // import authMiddleware from '../middleware/authMiddleware.js';
 // Create the routes for the order
-router.post('/create-order', orderController.createOrder);
-router.get('/get-all-orders',  orderController.getAllOrders);
-router.get('/get-order-by-id/:order_id',  orderController.getOrderById);
+router.post('/api/create-order', createOrder);
+router.get('/api/get-all-orders',  getAllOrders);
+router.get('/api/get-order-by-id/:order_id',  getOrderById);
 // Export the router
-export default router;
+module.exports= router;

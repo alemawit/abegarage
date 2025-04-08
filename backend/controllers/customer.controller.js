@@ -1,5 +1,6 @@
 // Import the customer service
-import customerService from '../services/customerService.js';
+// import customerService from '../services/customerService.js';
+const customerService= require('../service/customer.service');
 //Customer Controller (for the customer_identifier and customer_info tables)
 // Create the add customer controller
 const createCustomer = async(req, res, next)=> {
@@ -65,9 +66,9 @@ const getCustomerBySearch=async(req, res, next) => {
   }
 }
 //create the getCustomerByEmail controller
-const getCustomerByEmail=async(req, res, next) => {
+const getCustomerById=async(req, res, next) => {
   // Call the getCustomerByEmail method from the customer service 
-  const customers = await customerService.getCustomerByEmail(req.body.customer_email);
+  const customers = await customerService.getCustomerById(req.params.id);
   // console.log(customers);
   if (!customers) {
     res.status(400).json({
@@ -80,11 +81,10 @@ const getCustomerByEmail=async(req, res, next) => {
     });
   }
 }
-
 // Create the updateCustomer controller
 const updateCustomer = async (req, res, next) => {
   // Validate input data (e.g., customer_email or customer_id must be provided)
-  const { customer_email, customer_id, customer_info } = req.body;
+  const { customer_email, customer_id } = req.body;
   if (!customer_email && !customer_id) {
     return res.status(400).json({
       error: "Customer email or ID must be provided to update the customer."
@@ -93,7 +93,7 @@ const updateCustomer = async (req, res, next) => {
 
   try {
     // Check if the customer exists
-    const existingCustomer = await customerService.getCustomerById(customer_id || customer_email);
+    const existingCustomer = await customerService.getCustomerByIdOrEmail(customer_id || customer_email);
     if (!existingCustomer) {
       return res.status(404).json({
         error: "Customer not found!"
@@ -101,7 +101,8 @@ const updateCustomer = async (req, res, next) => {
     }
 
     // Proceed with updating the customer
-    const updatedCustomer = await customerService.updateCustomer(customer_id || customer_email, customer_info);
+     const customer_info = { ...req.body };
+    const updatedCustomer = await customerService.updateCustomer(req.params.id, customer_info);
 
     if (!updatedCustomer) {
       return res.status(400).json({
@@ -121,7 +122,6 @@ const updateCustomer = async (req, res, next) => {
     });
   }
 }
-
 // Create the deleteCustomer controller
 const deleteCustomer = async (req, res, next) => {
   // Validate that either customer_id or customer_email is provided
@@ -134,7 +134,7 @@ const deleteCustomer = async (req, res, next) => {
 
   try {
     // Check if the customer exists before attempting to delete
-    const existingCustomer = await customerService.getCustomerById(customer_id || customer_email);
+    const existingCustomer = await customerService.getCustomerByIdOrEmail(customer_id || customer_email);
     if (!existingCustomer) {
       return res.status(404).json({
         error: "Customer not found!"
@@ -142,7 +142,7 @@ const deleteCustomer = async (req, res, next) => {
     }
 
     // Proceed with deleting the customer
-    const deleteResult = await customerService.deleteCustomer(customer_id || customer_email);
+    const deleteResult = await customerService.deleteCustomer(customer_id);
 
     if (!deleteResult) {
       return res.status(400).json({
@@ -162,16 +162,14 @@ const deleteCustomer = async (req, res, next) => {
     });
   }
 }
-
 // Export the controllers
-const customerController = {
+module.exports= {
   createCustomer,
   getAllCustomers,
   getCustomerBySearch,
-  getCustomerByEmail,
+  getCustomerById,
   updateCustomer,
   deleteCustomer,
 };
 
-export default customerController;
 

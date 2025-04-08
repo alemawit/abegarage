@@ -1,10 +1,10 @@
 // Import the express module  
-import express from 'express';
+const express = require('express');
 // Call the router method from express to create the router 
 const router = express.Router();
 // Import the login controller 
-import logIn from "../controllers/loginController.js";
+const  logIn  = require('../controllers/login.controller');
 // Create a route to handle the login request on post
 router.post("/api/employee/login", logIn);
 // Export the router
-export default router;
+module.exports = router;

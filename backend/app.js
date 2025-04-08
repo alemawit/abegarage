@@ -1,40 +1,37 @@
-// Import required modules
+// Import the express module
 const express = require("express");
+// Import the dotenv module and call the config method to load the environment variables
+require("dotenv").config();
+// Import the sanitizer module
+const sanitize = require("sanitize");
+// Import the CORS module
 const cors = require("cors");
-const pool = require("./dbconfig/db.config"); // Import the DB pool
-//import service module to create tables
-const service = require("./service/install.service");
-//import the router
-const router = require("./routes/index");
-
-// Create a new express application
+// Set up the CORS options to allow requests from our front-end
+const corsOptions = {
+  origin: process.env.FRONTEND_URL,
+  optionsSuccessStatus: 200,
+};
+// Create a variable to hold our port number
+const port = process.env.PORT;
+// Import the router
+const router = require("./routes");
+// Create the webserver
 const app = express();
-//add the router to the application as a middleware
-app.use(router);
-
-// Use cors middleware for handling cross-origin requests
-app.use(cors());
-
-// Use json middleware for handling JSON requests
+// Add the CORS middleware
+app.use(cors(corsOptions));
+// Add the express.json middleware to the application
 app.use(express.json());
-
-// Test database connection using the pool
-pool.getConnection() // Get a connection from the pool
-  .then((connection) => {
-    console.log("Connected to the database successfully!");
-    connection.release(); // Release the connection back to the pool
-  })
-  .catch((err) => {
-    console.error("Database connection error:", err.message);
-  });
-
-// Home route
+// Add the sanitizer to the express middleware
+app.use(sanitize.middleware);
+// Define a root route handler for `/`
 app.get("/", (req, res) => {
-  res.send("Welcome to Abe Garage");
+  res.send("Welcome to the API!");
 });
-
-// Start the server
-const PORT = process.env.DB_PORT; // Use the server port from the .env file or default to 3000
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// Add the routes to the application as middleware
+app.use(router);
+// Start the webserver
+app.listen(port, () => {
+  console.log(`Server running on port: ${port}`);
 });
+// Export the webserver for use in the application
+module.exports = app;
