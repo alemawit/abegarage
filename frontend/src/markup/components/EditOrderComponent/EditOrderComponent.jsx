@@ -203,7 +203,7 @@ function EditOrderComponent() {
               label="Mark as received"
               checked={order_received}
               onChange={(e) => setOrderReceived(e.target.checked)}
-              disabled={order.active_order === 0}
+              disabled={order.active_order === 1}
             />
           </Card.Body>
         </Card>

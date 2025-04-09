@@ -1,110 +1,190 @@
-import React,{useState} from 'react'
-import './AddEmployeeForm.css'
+import React, { useState } from "react";
+import "./AddEmployeeForm.css";
+import employeeService from "../../../../services/employee.service";
+import { useAuth } from "../../../../Contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
-function AddEmployeeForm() {
-  const [email, setEmail] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [role, setRole] = useState("");
-  const [password, setPassword] = useState("");
+function AddEmployeeForm(props) {
+  const [employee_email, setEmail] = useState("");
+  const [employee_first_name, setFirstName] = useState("");
+  const [employee_last_name, setLastName] = useState("");
+  const [employee_phone, setPhoneNumber] = useState("");
+  const [employee_password, setPassword] = useState("");
+  const [active_employee, setActive_employee] = useState(1);
+  const [company_role_id, setCompany_role_id] = useState(1);
+  // Errors
+  const [emailError, setEmailError] = useState("");
+  const [firstNameRequired, setFirstNameRequired] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [serverError, setServerError] = useState("");
+
+  let loggedInEmployeeToken = "";
+  const { employee } = useAuth();
+  if (employee && employee.employee_token) {
+    loggedInEmployeeToken = employee.employee_token;
+  }
+
+  const navigate = useNavigate();
+
+  const resetForm = () => {
+    setEmail("");
+    setFirstName("");
+    setLastName("");
+    setPhoneNumber("");
+    setPassword("");
+    setActive_employee(1);
+    setCompany_role_id(1);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log("Form submitted with the following data:", {
-      email,
-      firstName,
-      lastName,
-      phone,
-      role,
-      password,
-    });
+    let valid = true;
+
+    if (!employee_first_name) {
+      setFirstNameRequired("First name is required");
+      valid = false;
+    } else {
+      setFirstNameRequired("");
+    }
+
+    if (!employee_email) {
+      setEmailError("Email is required");
+      valid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(employee_email)) {
+      setEmailError("Invalid email format");
+      valid = false;
+    } else {
+      setEmailError("");
+    }
+
+    if (!employee_password || employee_password.length < 6) {
+      setPasswordError("Password must be at least 6 characters long");
+      valid = false;
+    } else {
+      setPasswordError("");
+    }
+
+    if (!valid) return;
+
+    const formData = {
+      employee_email,
+      employee_first_name,
+      employee_last_name,
+      employee_phone,
+      employee_password,
+      active_employee,
+      company_role_id,
+    };
+
+    employeeService
+      .createEmployee(formData, loggedInEmployeeToken)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to add employee");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.error) {
+          setServerError(data.error);
+        } else {
+          setSuccess(true);
+          resetForm();
+          setTimeout(() => navigate("/admin/employees"), 2000);
+        }
+      })
+      .catch((error) => setServerError(error.message || "An error occurred."));
   };
+
   return (
-    <div>
-      <section className="form-section">
-        <h2>
-          Add a new employee <span style={{ color: "#EE0D0A" }}>__</span>
-        </h2>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">Employee email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+    <section className="contact-section">
+      <div className="auto-container">
+        <div className="contact-title">
+          <h2>Add a new employee</h2>
+        </div>
+        <div className="row clearfix">
+          <div className="form-column col-lg-7">
+            <div className="inner-column">
+              <div className="contact-form">
+                <form onSubmit={handleSubmit}>
+                  <div className="row clearfix">
+                    {serverError && (
+                      <div className="validation-error">{serverError}</div>
+                    )}
+                    <input
+                      type="email"
+                      placeholder="Employee email"
+                      value={employee_email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                    {emailError && (
+                      <div className="validation-error">{emailError}</div>
+                    )}
+                    <input
+                      type="text"
+                      placeholder="Employee first name"
+                      value={employee_first_name}
+                      onChange={(e) => setFirstName(e.target.value)}
+                    />
+                    {firstNameRequired && (
+                      <div className="validation-error">
+                        {firstNameRequired}
+                      </div>
+                    )}
+                    <input
+                      type="text"
+                      placeholder="Employee last name"
+                      value={employee_last_name}
+                      onChange={(e) => setLastName(e.target.value)}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Employee phone"
+                      value={employee_phone}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                    />
+                    <select
+                      value={company_role_id}
+                      onChange={(e) =>
+                        setCompany_role_id(Number(e.target.value))
+                      }
+                    >
+                      <option value="1">Employee</option>
+                      <option value="2">Manager</option>
+                      <option value="3">Admin</option>
+                    </select>
+                    <input
+                      type="password"
+                      placeholder="Employee password"
+                      value={employee_password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    {passwordError && (
+                      <div className="validation-error">{passwordError}</div>
+                    )}
+                    <button
+                      className="theme-btn btn-style-one"
+                      type="submit"
+                      style={{
+                        width: "auto",
+                        padding: "8px 16px",
+                        minWidth: "fit-content",
+                        display: "inline-block",
+                        textAlign: "center",
+                      }}
+                    >
+                      <span>Add Employee</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="first-name">Employee first name</label>
-            <input
-              type="text"
-              id="first-name"
-              name="first-name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="last-name">Employee last name</label>
-            <input
-              type="text"
-              id="last-name"
-              name="last-name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="phone">Employee phone (555-555-5555)</label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="role">Employee role</label>
-            <select
-              id="role"
-              name="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              required
-            >
-              <option value="admin">Admin</option>
-              <option value="manager">Manager</option>
-              <option value="staff">Employee</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label htmlFor="password">Employee password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" className="btn">
-            ADD EMPLOYEE
-          </button>
-        </form>
-      </section>
-    </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
-export default AddEmployeeForm
+export default AddEmployeeForm;

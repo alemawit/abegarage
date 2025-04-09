@@ -1,22 +1,18 @@
-
-
-
 import React, { useState, useEffect } from "react";
 import { Table, Modal, Badge, Spinner } from "react-bootstrap";
 import { useAuth } from "../../../../../Contexts/AuthContext";
 import { format } from "date-fns";
 import orderService from "../../../../../services/order.service";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaEdit } from "react-icons/fa"; // Importing icons
+import { FaEye, FaEdit } from "react-icons/fa";
 
 const OrderList = ({ orderFromCustomer }) => {
   const [orders, setOrders] = useState([]);
-  const [selectedOrder, setSelectedOrder] = useState(null); // Ensure this is set
-  const [showModal, setShowModal] = useState(false); // Modal state
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [customerPage, setCustomerPage] = useState(1);
   const navigate = useNavigate();
   const { employee } = useAuth();
   let loggedInEmployeeToken = employee?.employee_token || "";
@@ -26,22 +22,22 @@ const OrderList = ({ orderFromCustomer }) => {
       .getAllOrders(loggedInEmployeeToken)
       .then((res) => {
         console.log("API Response:", res);
-        if (res.data && typeof res.data === "object") {
-          setOrders([res.data]); // Wrap it in an array if it's a single order
+        if (res.data && Array.isArray(res.data)) {
+          setOrders(res.data); // ✅ FIXED: use the array directly
         } else {
-          setOrders([]); // Handle invalid data
+          setOrders([]); // fallback if unexpected structure
         }
       })
       .catch((err) => {
         console.error("Error fetching orders:", err);
-        setOrders([]); // Prevent `null` or `undefined` state
+        setOrders([]);
       })
       .finally(() => setLoading(false));
   }, [loggedInEmployeeToken]);
 
   const handleViewDetails = (order) => {
     setSelectedOrder(order);
-    setShowModal(true); // Set showModal to true to open the modal
+    setShowModal(true);
   };
 
   const handleEditClick = (order) => {
@@ -71,75 +67,8 @@ const OrderList = ({ orderFromCustomer }) => {
             />
             <p>Loading orders...</p>
           </div>
-        ) : orderFromCustomer ? (
-          !currentOrders ? (
-            <div>No Order Available</div>
-          ) : (
-            <div className="table-responsive">
-              <Table striped bordered hover className="orders-table">
-                <thead>
-                  <tr>
-                    <th>Order ID</th>
-                    <th>Customer</th>
-                    <th>Vehicle</th>
-                    <th>Order Date</th>
-                    <th>Received by</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentOrders?.map((order, indx) => (
-                    <tr key={indx}>
-                      <td>{order.order_id}</td>
-                      <td>{order.customer_name || "N/A"}</td>
-                      <td>
-                        {order.vehicle_make} {order.vehicle_year}
-                      </td>
-                      <td>
-                        {format(new Date(order.order_date), "MM/dd/yyyy HH:mm")}
-                      </td>
-                      <td>{order.employee_name || "N/A"}</td>
-                      <td>
-                        <Badge
-                          style={{ borderRadius: "20px" }}
-                          bg={
-                            order.active_order === 2
-                              ? "secondary"
-                              : order.active_order
-                              ? "success"
-                              : "warning"
-                          }
-                        >
-                          {order.active_order === 2
-                            ? "Received"
-                            : order.active_order
-                            ? "Completed"
-                            : "In Progress"}
-                        </Badge>
-                      </td>
-                      <td>
-                        {/* View Details Icon */}
-                        <FaEye
-                          style={{
-                            cursor: "pointer",
-                            color: "#081847",
-                            marginRight: "10px",
-                          }}
-                          onClick={() => handleViewDetails(order)}
-                        />
-                        {/* Edit Icon */}
-                        <FaEdit
-                          style={{ cursor: "pointer", color: "#FFA500" }}
-                          onClick={() => handleEditClick(order)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </div>
-          )
+        ) : currentOrders.length === 0 ? (
+          <div className="text-center">No Orders Available</div>
         ) : (
           <div className="table-responsive">
             <Table striped bordered hover className="orders-table">
@@ -155,17 +84,19 @@ const OrderList = ({ orderFromCustomer }) => {
                 </tr>
               </thead>
               <tbody>
-                {currentOrders?.map((order, indx) => (
+                {currentOrders.map((order, indx) => (
                   <tr key={indx}>
                     <td>{order.order_id}</td>
-                    <td>{order.customer_first_name || "N/A"}</td>
+                    <td>{order.customer_name || "Unknown"}</td>
                     <td>
                       {order.vehicle_make} {order.vehicle_year}
                     </td>
                     <td>
-                      {format(new Date(order.order_date), "MM/dd/yyyy HH:mm")}
+                      {order.order_date
+                        ? format(new Date(order.order_date), "MM/dd/yyyy HH:mm")
+                        : "Invalid Date"}
                     </td>
-                    <td>{order.employee_first_name || "N/A"}</td>
+                    <td>{order.employee_name || "N/A"}</td>
                     <td>
                       <Badge
                         style={{ borderRadius: "20px" }}
@@ -185,7 +116,6 @@ const OrderList = ({ orderFromCustomer }) => {
                       </Badge>
                     </td>
                     <td>
-                      {/* View Details Icon */}
                       <FaEye
                         style={{
                           cursor: "pointer",
@@ -194,7 +124,6 @@ const OrderList = ({ orderFromCustomer }) => {
                         }}
                         onClick={() => handleViewDetails(order)}
                       />
-                      {/* Edit Icon */}
                       <FaEdit
                         style={{ cursor: "pointer", color: "#FFA500" }}
                         onClick={() => handleEditClick(order)}
@@ -207,7 +136,6 @@ const OrderList = ({ orderFromCustomer }) => {
           </div>
         )}
 
-        {/* Modal for View Details */}
         {selectedOrder && (
           <Modal show={showModal} onHide={() => setShowModal(false)}>
             <Modal.Header closeButton>
@@ -218,18 +146,24 @@ const OrderList = ({ orderFromCustomer }) => {
                 <strong>Order ID:</strong> {selectedOrder.order_id}
               </p>
               <p>
-                <strong>Customer:</strong> {selectedOrder.customer_name}
+                <strong>Customer:</strong>{" "}
+                {selectedOrder.customer_name || "Unknown"}
               </p>
               <p>
                 <strong>Vehicle:</strong> {selectedOrder.vehicle_make}{" "}
                 {selectedOrder.vehicle_year}
               </p>
               <p>
-                <strong>Order Date:</strong>{" "}
-                {format(new Date(selectedOrder.order_date), "MM/dd/yyyy HH:mm")}
+                <strong>Order Date:</strong>
+                {selectedOrder.order_date
+                  ? format(
+                      new Date(selectedOrder.order_date),
+                      "MM/dd/yyyy HH:mm"
+                    )
+                  : "Invalid Date"}
               </p>
               <p>
-                <strong>Status:</strong>{" "}
+                <strong>Status:</strong>
                 {selectedOrder.active_order === 2
                   ? "Received"
                   : selectedOrder.active_order
@@ -237,7 +171,8 @@ const OrderList = ({ orderFromCustomer }) => {
                   : "In Progress"}
               </p>
               <p>
-                <strong>Received by:</strong> {selectedOrder.employee_name}
+                <strong>Received by:</strong>{" "}
+                {selectedOrder.employee_name || "N/A"}
               </p>
             </Modal.Body>
             <Modal.Footer>

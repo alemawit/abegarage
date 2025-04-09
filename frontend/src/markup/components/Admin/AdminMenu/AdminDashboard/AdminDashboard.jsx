@@ -1,6 +1,6 @@
-import React from 'react'
+import React from "react";
 
-import { Link } from 'react-router-dom'; // Import Link for navigation
+import { Link } from "react-router-dom"; // Import Link for navigation
 
 const AdminDashboard = () => {
   return (
@@ -112,6 +112,6 @@ const AdminDashboard = () => {
       </div>
     </section>
   );
-}
+};
 
-export default AdminDashboard
+export default AdminDashboard;

@@ -1,6 +1,6 @@
 //Import from the env
 
-const api_url = import.meta.env.VITE_REACT_APP_URL;
+const api_url = import.meta.env.VITE_API_BASE_URL;
 //Create a function to send a service create request
 const createService = async (formServiceData, loggedInEmployeeToken) => {
   console.log(formServiceData.service_price);
@@ -55,24 +55,24 @@ const getAllServices = async (loggedInEmployeeToken) => {
 
 // Function to update a service
 const updateService = async (serviceData, loggedEmployeeToken) => {
-  console.log(serviceData);
   try {
-    // Add serviceId to the body
-    const response = await fetch(`${api_url}/api/service-edit`, {
-      method: "PUT", // PUT method to update
-      headers: {
-        "Content-Type": "application/json",
-        "x-access-token": loggedEmployeeToken,
-      },
-      body: JSON.stringify(serviceData), // Send service data including serviceId in the body
-    });
+    const response = await fetch(
+      `${api_url}/api/service/${serviceData.service_id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-access-token": loggedEmployeeToken,
+        },
+        body: JSON.stringify(serviceData),
+      }
+    );
 
     if (!response.ok) {
-      const errorData = await response.json(); // Extract the error message from the response
+      const errorData = await response.json(); // This line is risky if response is HTML
       throw new Error(errorData.error || "Failed to update service");
     }
 
-    // Return the updated service data from the response
     return response.json();
   } catch (error) {
     console.error("Error updating service:", error.message);

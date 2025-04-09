@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Form, Spinner } from "react-bootstrap";
 import serviceService from "../../../../services/service.service";
-import { useAuth } from "../../../../Contexts/AuthContext"
+import { useAuth } from "../../../../Contexts/AuthContext";
 import SingleServiceDisplay from "../SingleServiceDisplay/SingleServiceDisplay";
 import { Card } from "react-bootstrap";
 

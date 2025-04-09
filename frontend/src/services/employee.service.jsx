@@ -14,9 +14,9 @@ const createEmployee = async (formData, loggedInEmployeeToken) => {
       },
       body: JSON.stringify(formData),
     };
-
+console.log(api_url);
     const response = await fetch(`${api_url}/api/employee`, requestOptions);
-
+// console.log(response);
     if (!response.ok) {
       const errorMessage = await response.text();
       throw new Error("Not an admin!");
@@ -42,73 +42,7 @@ const getAllEmployees = async (token) => {
   const response = await fetch(`${api_url}/api/employee`, requestOptions);
   return response;
 };
-// In employeeService.js
-// const getEmployeeById = async (employee_id, token) => {
-//   const response = await fetch(`/api/employee/${employee_id}`, {
-//     method: "GET",
-//     headers: {
-//       "Authorization": `Bearer ${token}`,
-//     },
-//   });
-//   return response;
-// };
-// const getEmployeeById = async (employee_id, token) => {
-//   try {
-//     const response = await fetch(`/api/employee/${employee_id}`, {
-//       method: "GET",
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//       },
-//     });
 
-//     // Check if the response is OK (status code 200)
-//     if (!response.ok) {
-//       throw new Error(`Failed to fetch employee data: ${response.statusText}`);
-//     }
-
-//     // Check the response content type (make sure it's JSON)
-//     const contentType = response.headers.get("content-type");
-//     if (!contentType || !contentType.includes("application/json")) {
-//       throw new Error("Unexpected response format, expected JSON.");
-//     }
-
-//     // Parse and return the JSON response
-//     const data = await response.json();
-//     return data;
-//   } catch (error) {
-//     // Log the error and throw it to be handled later
-//     console.error("Error while fetching employee:", error);
-//     throw error; // Rethrow to let the caller handle it
-//   }
-// };
-// const getEmployeeById = async (employee_id, token) => {
-//   try {
-//     const response = await fetch(`${api_url}/api/employee/${employee_id}`, {
-//       method: "GET",
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//       },
-//     });
-
-//     if (!response.ok) {
-//       const errorText = await response.text();
-//       console.error("Error response:", errorText); // Log the response body for debugging
-//       throw new Error(`Failed to fetch employee: ${response.statusText}`);
-//     }
-
-//     // Check the response content type (ensure it's JSON)
-//     const contentType = response.headers.get("Content-Type");
-//     if (!contentType || !contentType.includes("application/json")) {
-//       throw new Error("Unexpected response format, expected JSON.");
-//     }
-
-//     const data = await response.json();
-//     return data;
-//   } catch (error) {
-//     console.error("Error while fetching employee:", error);
-//     throw error; // Rethrow to let the caller handle it
-//   }
-// };
 const getEmployeeById = async (employee_id, token) => {
   try {
     const response = await fetch(`${api_url}/api/employee/${employee_id}`, {

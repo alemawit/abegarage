@@ -1,6 +1,6 @@
-import React from 'react'
-import AdminMenu from '../../components/Admin/AdminMenu/AdminMenu'
-import NewOrders from '../../components/Admin/NewOrders/NewOrders'
+import React from "react";
+import AdminMenu from "../../components/Admin/AdminMenu/AdminMenu";
+import NewOrders from "../../components/Admin/NewOrders/NewOrders";
 
 const AddNewOrder = () => {
   return (
@@ -15,6 +15,6 @@ const AddNewOrder = () => {
       </div>
     </div>
   );
-}
+};
 
-export default AddNewOrder
+export default AddNewOrder;

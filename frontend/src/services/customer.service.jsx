@@ -1,6 +1,7 @@
-const api_url = import.meta.env.VITE_REACT_APP_URL;
+const api_url = import.meta.env.VITE_API_BASE_URL;
 
 // Function to create a new customer
+
 const createCustomer = async (formData, token) => {
   try {
     console.log("Sending Data:", formData);
@@ -136,5 +137,3 @@ const customerService = {
 };
 
 export default customerService;
-export { createCustomer, getAllCustomers, getCustomerById, customerSearch, updateCustomer };
-// Compare this snippet from CodeBase/abegarage/frontend/src/Services/customer.service.jsx:

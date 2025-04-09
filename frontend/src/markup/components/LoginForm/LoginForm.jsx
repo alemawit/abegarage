@@ -1,95 +1,158 @@
 import React, { useState } from "react";
-import "./LoginForm.css";
+import { useNavigate, useLocation } from "react-router-dom";
+import loginService from "../../../services/login.service.jsx";
+import "./LoginForm.css"; // Make sure to import your CSS file
 
 function LoginForm() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [emailFocus, setEmailFocus] = useState(false);
-  const [passwordFocus, setPasswordFocus] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [employee_email, setEmail] = useState("");
+  const [employee_password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [serverError, setServerError] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMessage("");
-
-    try {
-      const response = await fetch("http://localhost:8000/api/employee/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log("Login success:", data);
-        // Optional: Save token to localStorage
-        // localStorage.setItem("token", data.token);
-        // Optional: Redirect
-        // navigate("/dashboard");
-        alert("Login successful!");
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    // Handle client side validations here
+    let valid = true; // Flag
+    // Email validation
+    if (!employee_email) {
+      setEmailError("Please enter your email address first");
+      valid = false;
+    } else if (!employee_email.includes("@")) {
+      setEmailError("Invalid email format");
+    } else {
+      const regex = /^\S+@\S+\.\S+$/;
+      if (!regex.test(employee_email)) {
+        setEmailError("Invalid email format");
+        valid = false;
       } else {
-        setErrorMessage(data.message || "Login failed.");
+        setEmailError("");
       }
-    } catch (error) {
-      console.error("Error:", error);
-      setErrorMessage("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
     }
+    // Password has to be at least 6 characters long
+    if (!employee_password || employee_password.length < 6) {
+      setPasswordError("Password must be at least 6 characters long");
+      valid = false;
+    } else {
+      setPasswordError("");
+    }
+    if (!valid) {
+      return;
+    }
+    // Handle form submission here
+    const formData = {
+      employee_email,
+      employee_password,
+    };
+    console.log(formData);
+    // Call the service
+    const loginEmployee = loginService.logIn(formData);
+    console.log(loginEmployee);
+    loginEmployee
+      .then((response) => response.json())
+      .then((response) => {
+        console.log(response);
+        if (response.status === "success") {
+          // Save the user in the local storage
+          if (response.data.employee_token) {
+            console.log(response.data);
+            localStorage.setItem("employee", JSON.stringify(response.data));
+          }
+          // Redirect the user to the dashboard
+          // navigate('/admin');
+          console.log(location);
+          if (location.pathname === "/login") {
+            // navigate('/admin');
+            // window.location.replace('/admin');
+            // To home for now
+            window.location.replace("/admin");
+          } else {
+            window.location.reload();
+          }
+        } else {
+          // Show an error message
+          setServerError(response.message);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setServerError("An error has occurred. Please try again later." + err);
+      });
   };
 
   return (
-    <div className="login-container">
-      <h2>
-        Login to your account <span style={{ color: "#EE0D0A" }}>__</span>
-      </h2>
-      <form onSubmit={handleSubmit}>
-        <div
-          className={`input-container ${emailFocus || email ? "focus" : ""}`}
-        >
-          <label htmlFor="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={email}
-            onFocus={() => setEmailFocus(true)}
-            onBlur={() => setEmailFocus(false)}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+    <section className="contact-section">
+      <div className="auto-container">
+        <div className="contact-title">
+          <h2>Login to your account</h2>
         </div>
+        <div className="row clearfix">
+          <div className="form-column col-lg-7">
+            <div className="inner-column">
+              <div className="contact-form">
+                <form onSubmit={handleSubmit}>
+                  <div className="row clearfix">
+                    <div className="form-group col-md-12">
+                      {serverError && (
+                        <div className="validation-error" role="alert">
+                          {serverError}
+                        </div>
+                      )}
+                      <input
+                        type="email"
+                        name="employee_email"
+                        value={employee_email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        placeholder="Email"
+                      />
+                      {emailError && (
+                        <div className="validation-error" role="alert">
+                          {emailError}
+                        </div>
+                      )}
+                    </div>
 
-        <div
-          className={`input-container ${
-            passwordFocus || password ? "focus" : ""
-          }`}
-        >
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={password}
-            onFocus={() => setPasswordFocus(true)}
-            onBlur={() => setPasswordFocus(false)}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+                    <div className="form-group col-md-12">
+                      <input
+                        type="password"
+                        name="employee_password"
+                        value={employee_password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        placeholder="Password"
+                      />
+                      {passwordError && (
+                        <div className="validation-error" role="alert">
+                          {passwordError}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="form-group col-md-12">
+                      <button
+                        className="theme-btn btn-style-one"
+                        type="submit"
+                        data-loading-text="Please wait..."
+                        style={{
+                          width: "auto",
+                          padding: "8px 16px",
+                          minWidth: "fit-content",
+                          display: "inline-block",
+                          textAlign: "center",
+                        }}
+                      >
+                        <span>Login</span>
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
-
-        {errorMessage && <p className="error-message">{errorMessage}</p>}
-
-        <button type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
-    </div>
+      </div>
+    </section>
   );
 }
 

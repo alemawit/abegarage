@@ -1,8 +1,8 @@
-import React from 'react'
+import React from "react";
 //import the component adminMenu
 import AdminMenu from "../../components/Admin/AdminMenu/AdminMenu";
 // import componet edit order
-import EditOrderComponent from '../../components/EditOrderComponent/EditOrderComponent'
+import EditOrderComponent from "../../components/EditOrderComponent/EditOrderComponent";
 
 const EditOrder = () => {
   return (
@@ -19,6 +19,6 @@ const EditOrder = () => {
       </div>
     </div>
   );
-}
+};
 
-export default EditOrder
+export default EditOrder;

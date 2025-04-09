@@ -4,7 +4,6 @@ import customerService from "../../../../services/customer.service";
 import { useAuth } from "../../../../Contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-
 function AddCustomerForm(props) {
   const [customer_email, setEmail] = useState("");
   const [customer_first_name, setFirstName] = useState("");
@@ -22,7 +21,6 @@ function AddCustomerForm(props) {
 
   const navigate = useNavigate();
 
-
   let loggedInCustomerToken = "";
   const { customer } = useAuth();
   if (customer && customer.customer_token) {
@@ -39,72 +37,70 @@ function AddCustomerForm(props) {
     setCustomer_role_id(1);
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setServerError(""); // Clear any previous errors
-  setSuccess(false); // Reset success state
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setServerError(""); // Clear any previous errors
+    setSuccess(false); // Reset success state
 
-  let valid = true;
+    let valid = true;
 
-  if (!customer_first_name) {
-    setFirstNameRequired("First name is required");
-    valid = false;
-  } else {
-    setFirstNameRequired("");
-  }
-
-  if (!customer_email) {
-    setEmailError("Email is required");
-    valid = false;
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer_email)) {
-    setEmailError("Invalid email format");
-    valid = false;
-  } else {
-    setEmailError("");
-  }
-
-  if (!customer_password || customer_password.length < 6) {
-    setPasswordError("Password must be at least 6 characters long");
-    valid = false;
-  } else {
-    setPasswordError("");
-  }
-
-  if (!valid) return;
-
-  const formData = {
-    customer_email,
-    customer_first_name,
-    customer_last_name,
-    customer_phone_number: customer_phone,
-    active_customer_status: active_customer,
-    customer_password,
-    customer_role_id,
-  };
-
-  try {
-    const response = await customerService.createCustomer(
-      formData,
-      loggedInCustomerToken
-    );
-
-    console.log("Final Response in Frontend:", response);
-
-    if (response && response.status === "success") {
-      setSuccess(true);
-      resetForm();
-      alert("Customer added successfully!");
-      navigate("/admin/customers"); // ✅ Immediate navigation on success
+    if (!customer_first_name) {
+      setFirstNameRequired("First name is required");
+      valid = false;
     } else {
-      throw new Error(response.message || "Unexpected response format");
+      setFirstNameRequired("");
     }
-  } catch (error) {
-    console.error("Error adding customer:", error);
-    setServerError(error.message || "Failed to add customer");
-  }
-};
 
+    if (!customer_email) {
+      setEmailError("Email is required");
+      valid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer_email)) {
+      setEmailError("Invalid email format");
+      valid = false;
+    } else {
+      setEmailError("");
+    }
 
+    if (!customer_password || customer_password.length < 6) {
+      setPasswordError("Password must be at least 6 characters long");
+      valid = false;
+    } else {
+      setPasswordError("");
+    }
+
+    if (!valid) return;
+
+    const formData = {
+      customer_email,
+      customer_first_name,
+      customer_last_name,
+      customer_phone_number: customer_phone,
+      active_customer_status: active_customer,
+      customer_password,
+      customer_role_id,
+    };
+
+    try {
+      const response = await customerService.createCustomer(
+        formData,
+        loggedInCustomerToken
+      );
+
+      console.log("Final Response in Frontend:", response);
+
+      if (response && response.status === "success") {
+        setSuccess(true);
+        resetForm();
+        alert("Customer added successfully!");
+        navigate("/admin/customers"); // ✅ Immediate navigation on success
+      } else {
+        throw new Error(response.message || "Unexpected response format");
+      }
+    } catch (error) {
+      console.error("Error adding customer:", error);
+      setServerError(error.message || "Failed to add customer");
+    }
+  };
 
   return (
     <section className="contact-section header-section2">

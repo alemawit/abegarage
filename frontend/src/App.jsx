@@ -3,16 +3,16 @@ import { Routes, Route, Router } from "react-router-dom";
 //import the components
 import Home from "./markup/pages/Home";
 import Login from "./markup/pages/Login";
-import AddEmployee from "./markup/pages/Admin/AddEmployee";
+import AddEmployee from "./markup/pages/admin/AddEmployee";
 import Header from "./markup/components/Header/Header";
 import "./App.css";
 import Footer from "./markup/components/Footer/Footer";
 import Service from "./markup/pages/admin/Service";
-import About from "./markup/pages/about";
+import About from "./markup/pages/About";
 import Unautorized from "./markup/pages/Unautorized";
 //import the private auth route component
 import PrivateAuthRoute from "./markup/components/Auth/PrivateAuthRoute";
-import Orders from "./markup/pages/Admin/Orders";
+import Orders from "./markup/pages/admin/Orders";
 import AddCustomers from "./markup/pages/admin/AddCustomers";
 import Employees from "./markup/pages/admin/Employees";
 //import AdminDashboard from "./markup/pages/Admin/AdminDashboard";
@@ -24,6 +24,7 @@ import EditCustomer from "./markup/pages/admin/EditCustomer";
 import AddNewOrder from "./markup/pages/admin/AddNewOrder";
 import Services from "./markup/pages/Services";
 import EditOrder from "./markup/pages/admin/EditOrder";
+import CustomerDetail from "./markup/pages/admin/CustomerDetail";
 
 function App() {
   return (
@@ -69,13 +70,21 @@ function App() {
             </PrivateAuthRoute>
           }
         />
+        <Route
+          path="/admin/customer-detail/:id"
+          element={
+            <PrivateAuthRoute roles={[2, 3]}>
+              <CustomerDetail />
+            </PrivateAuthRoute>
+          }
+        />
 
         <Route path="/admin/employees" element={<Employees />} />
 
         <Route
           path="/admin/add-Employee"
           element={
-            <PrivateAuthRoute roles={[3]}>
+            <PrivateAuthRoute roles={[1]}>
               <AddEmployee />
             </PrivateAuthRoute>
           }
@@ -95,6 +104,10 @@ function App() {
         <Route path="/admin/customers" element={<Customers />} />
         <Route path="/employees/edit/:employee_id" element={<EditEmployee />} />
         <Route path="/customer/edit/:customer_id" element={<EditCustomer />} />
+        <Route
+          path="/admin/edit-customer/:customer_id"
+          element={<EditCustomer />}
+        />
       </Routes>
       <Footer />
     </>

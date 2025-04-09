@@ -1,24 +1,49 @@
-//Import from the env
-const api_url = import.meta.env.VITE_API_URL;
-//A function to create a new vehicle information
-const createVehicle = async (formVehicleData, loggedInEmployeeToken) => {
-  console.log(formVehicleData);
+// Import from the env
+const api_url = import.meta.env.VITE_API_BASE_URL;
+
+// A function to create a new vehicle
+// Function to create a new vehicle
+const createVehicle = async (
+  formVehicleData,
+  loggedInEmployeeToken,
+  customerId
+) => {
+  console.log("Creating vehicle with data:", formVehicleData);
+
+  // Ensure customerId is not undefined
+  if (!customerId) {
+    throw new Error("Customer ID is missing");
+  }
+
   try {
-    const response = await fetch(`${api_url}/api/add-vehicle`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-access-token": loggedInEmployeeToken,
-      },
-      body: JSON.stringify(formVehicleData),
-    });
+    const response = await fetch(
+      `${api_url}/api/add-vehicle?customer_id=${customerId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-access-token": loggedInEmployeeToken,
+        },
+        body: JSON.stringify(formVehicleData),
+      }
+    );
+
+    // Check if response is OK
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to create vehicle");
+      const errorData = await response.text(); // Use text() for error responses
+      console.error("Error response body:", errorData);
+      try {
+        const jsonErrorData = JSON.parse(errorData);
+        throw new Error(jsonErrorData.error || "Failed to create vehicle");
+      } catch (jsonError) {
+        throw new Error("Failed to create vehicle, non-JSON response");
+      }
     }
-    return response.json();
+
+    const data = await response.json(); // Parse the successful response
+    return data;
   } catch (error) {
-    console.error("Error:", error.message);
+    console.error("Error during vehicle creation:", error.message);
     throw error;
   }
 };
@@ -36,21 +61,31 @@ const getVehicle = async (customer_id, loggedInEmployeeToken) => {
       }
     );
 
-    const result = await response.json();
+    const result = await response.text(); // Use text() first to inspect raw response
 
     if (!response.ok) {
-      // Handle API errors while maintaining array format
-      return {
-        vehicles: [],
-        error: result.message || "Failed to get vehicles",
-      };
+      console.error("Error response:", result);
+      // Try parsing if it's JSON, otherwise return an error message
+      try {
+        const jsonResult = JSON.parse(result);
+        return {
+          vehicles: [],
+          error: jsonResult.message || "Failed to get vehicles",
+        };
+      } catch (jsonParseError) {
+        return {
+          vehicles: [],
+          error: "Failed to get vehicles, non-JSON response",
+        };
+      }
     }
 
-    // Always return array, even if empty
-    return result.data;
+    // Successfully received data - parse it as JSON
+    const jsonResponse = JSON.parse(result); // Parse raw text into JSON
+    return jsonResponse.data || []; // Ensure we return an empty array if no data exists
   } catch (error) {
-    console.error("Error:", error.message);
-    return []; // Return empty array on network errors
+    console.error("Error fetching vehicles:", error.message);
+    return []; // Return an empty array on network errors
   }
 };
 
@@ -58,4 +93,5 @@ const vehicleService = {
   createVehicle,
   getVehicle,
 };
+
 export default vehicleService;

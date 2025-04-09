@@ -20,7 +20,6 @@ import serviceService from "../../../../services/service.service";
 import vehicleService from "../../../../services/vehicle.service";
 import orderService from "../../../../services/order.service";
 
-
 const NewOrders = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [customers, setCustomers] = useState([]);
@@ -56,35 +55,36 @@ const NewOrders = () => {
     loggedInEmployeeToken = employee.employee_token;
   }
   // Search customers with debounce
- useEffect(() => {
-   const searchCustomers = async () => {
-     if (searchQuery.length > 0) {
-       try {
-         setLoading(true);
-         // Use the customerSearch function to get filtered customers
-         const customersData = await customerService.customerSearch(
-           searchQuery,
-           loggedInEmployeeToken
-         );
+  useEffect(() => {
+    const searchCustomers = async () => {
+      if (searchQuery.length > 0) {
+        try {
+          setLoading(true);
+          // Use the customerSearch function to get filtered customers
+          const customersData = await customerService.customerSearch(
+            searchQuery,
+            loggedInEmployeeToken
+          );
 
-         console.log("Received customers:", customersData); // Debug log
+          console.log("Received customers:", customersData); // Debug log
 
-         setCustomers(customersData);
-         setError("");
-       } catch (err) {
-         setError("Error searching customers");
-         setCustomers([]);
-       } finally {
-         setLoading(false);
-       }
-     } else {
-       setCustomers([]); // Clear results when search query is too short
-     }
-   };
+          setCustomers(customersData.data); // Set customers correctly from the 'data' field
+          setError("");
+        } catch (err) {
+          console.error("Error fetching customers:", err); // Log the actual error
+          setError("Error searching customers");
+          setCustomers([]);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setCustomers([]); // Clear results when search query is too short
+      }
+    };
 
-   const timerId = setTimeout(searchCustomers, 500); // Debounce the search request
-   return () => clearTimeout(timerId);
- }, [searchQuery, loggedInEmployeeToken]);
+    const timerId = setTimeout(searchCustomers, 500); // Debounce the search request
+    return () => clearTimeout(timerId);
+  }, [searchQuery, loggedInEmployeeToken]);
 
   // Fetch vehicles when customer is selected
   useEffect(() => {
@@ -138,6 +138,7 @@ const NewOrders = () => {
         setLoading(false);
       }
     };
+    console.log("Employee token:", loggedInEmployeeToken); // Must be defined
     fetchServices();
   }, [loggedInEmployeeToken]);
 
@@ -297,7 +298,15 @@ const NewOrders = () => {
           <Card.Header>No Vehicles found for this Customer</Card.Header>
           <div className="form-group col-md-12">
             <button
-              style={{ marginTop: "1rem" }}
+              style={{
+                marginTop: "1rem",
+
+                width: "auto",
+                padding: "8px 16px",
+                minWidth: "fit-content",
+                display: "inline-block",
+                textAlign: "center",
+              }}
               className="theme-btn btn-style-one"
               type="submit"
               data-loading-text="Please wait..."

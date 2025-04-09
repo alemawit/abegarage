@@ -37,43 +37,42 @@ const EmployeeEdit = () => {
     fetchEmployee();
   }, [employee_id]);
 
-const handleSave = async () => {
-  try {
-    const updatedEmployee = {
-      employee_first_name: employee.employee_first_name,
-      employee_last_name: employee.employee_last_name,
-      employee_phone: employee.employee_phone,
-      active_employee: parseInt(employee.active_employee, 10),
-      company_role_id: employee.company_role_id,
-    };
+  const handleSave = async () => {
+    try {
+      const updatedEmployee = {
+        employee_first_name: employee.employee_first_name,
+        employee_last_name: employee.employee_last_name,
+        employee_phone: employee.employee_phone,
+        active_employee: parseInt(employee.active_employee, 10),
+        company_role_id: employee.company_role_id,
+      };
 
-    console.log("Sending data to:", `${api_url}/api/employees/${employee_id}`);
-    console.log("Data being sent:", updatedEmployee);
+      console.log(
+        "Sending data to:",
+        `${api_url}/api/employees/${employee_id}`
+      );
+      console.log("Data being sent:", updatedEmployee);
 
-    // Call the update function
-    const response = await employeeService.updateEmployee(
-      employee_id,
-      updatedEmployee
-    );
+      // Call the update function
+      const response = await employeeService.updateEmployee(
+        employee_id,
+        updatedEmployee
+      );
 
-    // Check if response contains success message
-    if (response && response.message === "Employee updated successfully!") {
-      navigate("/admin/employees"); // Redirect if success message is found
-    } else {
-      setError(response.message || "Failed to save employee data");
+      // Check if response contains success message
+      if (response && response.message === "Employee updated successfully!") {
+        navigate("/admin/employees"); // Redirect if success message is found
+      } else {
+        setError(response.message || "Failed to save employee data");
+      }
+    } catch (err) {
+      console.error("Error updating employee:", err);
+      setError("Failed to update employee data: " + err.message);
     }
-  } catch (err) {
-    console.error("Error updating employee:", err);
-    setError("Failed to update employee data: " + err.message);
-  }
-};
-
-
-
+  };
 
   return (
     <div className="row clearfix">
-    
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       {employee ? (
@@ -124,7 +123,6 @@ const handleSave = async () => {
             />
           </div>
           <div>
-            
             <select
               value={employee.active_employee}
               onChange={(e) =>
@@ -139,7 +137,6 @@ const handleSave = async () => {
             </select>
           </div>
           <div>
-            
             <select
               value={employee.company_role_id}
               onChange={(e) =>
@@ -172,9 +169,7 @@ const handleSave = async () => {
       ) : (
         <p>Loading...</p>
       )}
-      
     </div>
-    
   );
 };
 

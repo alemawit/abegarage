@@ -1,6 +1,3 @@
-
-
-
 import React from "react";
 // Import the auth hook
 import { useAuth } from "../../../Contexts/AuthContext";
@@ -13,7 +10,7 @@ import CustomerList from "../../components/Admin/AdminMenu/CustomerList/Customer
 const Customers = () => {
   // Destructure the auth hook
   const { isLogged, role } = useAuth();
-  console.log(role)
+  console.log(role);
 
   // Check if the user is logged in and has access (Admin or Manager)
   if (isLogged) {

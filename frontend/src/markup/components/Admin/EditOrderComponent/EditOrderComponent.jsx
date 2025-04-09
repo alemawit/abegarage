@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import servicesService from '../../../../services/service.service'
+import servicesService from "../../../../services/service.service";
 import { useAuth } from "../../../contexts/AuthContext";
-import orderService from '../../../../services/order.service'
+import orderService from "../../../../services/order.service";
 import { FaLock } from "react-icons/fa6";
 import {
   Form,
@@ -13,7 +13,6 @@ import {
   Button,
 } from "react-bootstrap";
 import { Spinner } from "react-bootstrap";
-
 
 const EditOrderComponent = () => {
   const [services, setServices] = useState([]);

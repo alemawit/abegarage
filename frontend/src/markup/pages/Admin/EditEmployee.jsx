@@ -2,9 +2,7 @@ import React from "react";
 //import the component adminMenu
 import AdminMenu from "../../components/Admin/AdminMenu/AdminMenu";
 // import componet edit employee
-import EmployeeEdit from '../../components/Admin/AdminMenu/EmployeeEdit/EmployeeEdit'
-
-
+import EmployeeEdit from "../../components/Admin/AdminMenu/EmployeeEdit/EmployeeEdit";
 
 const EditEmployee = () => {
   return (
@@ -21,6 +19,6 @@ const EditEmployee = () => {
       </div>
     </div>
   );
-}
+};
 
-export default EditEmployee
+export default EditEmployee;
