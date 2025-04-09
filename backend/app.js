@@ -8,11 +8,12 @@ const sanitize = require("sanitize");
 const cors = require("cors");
 // Set up the CORS options to allow requests from our front-end
 const corsOptions = {
-  origin: process.env.FRONTEND_URL,
+  origin: process.env.FRONTEND_URL, // Using FRONTEND_URL from .env
   optionsSuccessStatus: 200,
 };
+console.log("Frontend URL:", process.env.FRONTEND_URL);
 // Create a variable to hold our port number
-const port = process.env.PORT;
+const port = process.env.PORT; // Using PORT from .env
 // Import the router
 const router = require("./routes");
 // Create the webserver

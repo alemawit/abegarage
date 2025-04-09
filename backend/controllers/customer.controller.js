@@ -1,175 +1,214 @@
-// Import the customer service
-// import customerService from '../services/customerService.js';
-const customerService= require('../service/customer.service');
-//Customer Controller (for the customer_identifier and customer_info tables)
+// Import customer service
+const customerService = require("../service/customer.service");
+const conn = require("../dbconfig/db.config"); // Ensure this is correct
+
 // Create the add customer controller
-const createCustomer = async(req, res, next)=> {
-  // Check if customer email already exists in the database 
-  const customerExists = await customerService.checkIfCustomerExists(req.body.customer_email);
-  // If customer exists, send a response to the client
-  if (customerExists) {
-    res.status(400).json({
-      error: "This email address is already associated with another customer!"
-    });
-  } else {
-    try {
-      const customerData = req.body;
-      // Create the customer
-      const customer = await customerService.createCustomer(customerData);
-      if (!customer) {
-        res.status(400).json({
-          error: "Failed to add the customer!"
-        });
-      } else {
-        res.status(200).json({
-          status: "true",
-        });
-      }
-    } catch (error) {
-      console.log(err);
-      res.status(400).json({
-        error: "Something went wrong!"
+async function createCustomer(req, res, next) {
+  try {
+    const { customer_email, customer_phone_number } = req.body;
+
+    // Check if customer already exists (by email or phone number)
+    const customerExists = await customerService.checkIfCustomerExists(
+      customer_email,
+      customer_phone_number
+    );
+
+    if (customerExists) {
+      return res.status(400).json({
+        status: "fail",
+        message:
+          "This email or phone number is already associated with another customer!",
       });
     }
-  }
-}
-// Create the getAllCustomers controller
-const getAllCustomers=async(req, res, next) => {
-  // Call the getAllCustomers method from the customer service 
-  const customers = await customerService.getAllCustomers();
-  // console.log(customers);
-  if (!customers) {
-    res.status(400).json({
-      error: "Failed to get all customers!"
-    });
-  } else {
-    res.status(200).json({
-      status: "success",
-      data: customers,
-    });
-  }
-}
-//create the getCustomerBySearch controller
-const getCustomerBySearch=async(req, res, next) => {
-  // Call the getCustomerBySearch method from the customer service 
-  const customers = await customerService.getCustomerBySearch(req.body.search);
-  // console.log(customers);
-  if (!customers) {
-    res.status(400).json({
-      error: "Failed to get customers!"
-    });
-  } else {
-    res.status(200).json({
-      status: "success",
-      data: customers,
-    });
-  }
-}
-//create the getCustomerByEmail controller
-const getCustomerById=async(req, res, next) => {
-  // Call the getCustomerByEmail method from the customer service 
-  const customers = await customerService.getCustomerById(req.params.id);
-  // console.log(customers);
-  if (!customers) {
-    res.status(400).json({
-      error: "Failed to get customers!"
-    });
-  } else {
-    res.status(200).json({
-      status: "success",
-      data: customers,
-    });
-  }
-}
-// Create the updateCustomer controller
-const updateCustomer = async (req, res, next) => {
-  // Validate input data (e.g., customer_email or customer_id must be provided)
-  const { customer_email, customer_id } = req.body;
-  if (!customer_email && !customer_id) {
-    return res.status(400).json({
-      error: "Customer email or ID must be provided to update the customer."
-    });
-  }
 
+    // Create the customer
+    const customer = await customerService.createCustomer(req.body);
+
+    if (!customer) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Failed to add the customer!",
+      });
+    }
+
+    return res.status(201).json({
+      status: "success",
+      message: "Customer created successfully!",
+      data: customer,
+    });
+  } catch (error) {
+    console.error("Error creating customer:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Something went wrong!",
+    });
+  }
+}
+
+// Create a getAllCustomers controller
+async function getAllCustomers(req, res, next) {
   try {
-    // Check if the customer exists
-    const existingCustomer = await customerService.getCustomerByIdOrEmail(customer_id || customer_email);
+    // Call the getAllCustomers method from customer service
+    const customers = await customerService.getAllCustomers();
+
+    if (!customers || customers.length === 0) {
+      return res.status(404).json({
+        status: "fail",
+        message: "No customers found!",
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      data: customers,
+    });
+  } catch (error) {
+    console.error("Error fetching customers:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Something went wrong!",
+    });
+  }
+}
+// Function to get a customer by ID
+const getCustomerById = async (req, res) => {
+  const customerId = req.params.id;
+  // Logic to get a customer by ID
+  // For example, you could fetch this from a database
+  res.send(`Customer with ID: ${customerId}`);
+};
+// Create the getSingleCustomer controller
+async function getSingleCustomer(req, res, next) {
+  try {
+    const customerId = parseInt(req.params.id); // Get customer ID from request parameters
+
+    // Call the getSingleCustomer method from customer service
+    const customer = await customerService.getSingleCustomer(customerId);
+
+    if (!customer) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Customer not found!",
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      data: customer,
+    });
+  } catch (error) {
+    console.error("Error fetching customer:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Something went wrong!",
+    });
+  }
+}
+//Create the searchCustomer controller
+async function searchCustomers(req, res, next) {
+  try {
+    const { query } = req.query; // Get the query from the request
+    const searchQuery = `%${query}%`; // Wrap the query with wildcards for partial match
+
+    // Call the searchCustomers method from customer service
+    const customers = await customerService.searchCustomers(searchQuery);
+
+    if (!customers || customers.length === 0) {
+      return res.status(404).json({
+        status: "fail",
+        message: "No customers found for the search query!",
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      data: customers,
+    });
+  } catch (error) {
+    console.error("Error searching customers:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Something went wrong during the search!",
+    });
+  }
+}
+// Search customer
+async function searchCustomers(req, res, next) {
+  try {
+    const searchQuery = req.query.query;
+
+    if (!searchQuery || searchQuery.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Search query is required",
+      });
+    }
+
+    const results = await customerService.searchCustomers(searchQuery);
+    // console.log(results)
+    return res.status(200).json({
+      success: true,
+      data: results,
+    });
+  } catch (error) {
+    console.error("Search error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Error searching customers",
+      error: error.message,
+    });
+  }
+}
+
+// Create the updateCustomer controller
+async function updateCustomer(req, res, next) {
+  try {
+    const customerId = parseInt(req.params.id); // Get customer ID from request parameters
+    const updateData = req.body;
+
+    // Check if customer exists
+    const existingCustomer = await customerService.getSingleCustomer(
+      customerId
+    );
     if (!existingCustomer) {
       return res.status(404).json({
-        error: "Customer not found!"
+        status: "fail",
+        message: "Customer not found!",
       });
     }
 
-    // Proceed with updating the customer
-     const customer_info = { ...req.body };
-    const updatedCustomer = await customerService.updateCustomer(req.params.id, customer_info);
-
+    // Update the customer
+    const updatedCustomer = await customerService.updateCustomer(
+      customerId,
+      updateData
+    );
     if (!updatedCustomer) {
       return res.status(400).json({
-        error: "Failed to update the customer!"
+        status: "fail",
+        message: "Failed to update the customer!",
       });
     }
 
-    // Successful update response
-    res.status(200).json({
+    return res.status(200).json({
       status: "success",
+      message: "Customer updated successfully!",
       data: updatedCustomer,
     });
   } catch (error) {
-    console.error(error);
-    res.status(400).json({
-      error: "Something went wrong while updating the customer!"
+    console.error("Error updating customer:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Something went wrong!",
     });
   }
 }
-// Create the deleteCustomer controller
-const deleteCustomer = async (req, res, next) => {
-  // Validate that either customer_id or customer_email is provided
-  const { customer_email, customer_id } = req.params;
-  if (!customer_email && !customer_id) {
-    return res.status(400).json({
-      error: "Customer email or ID must be provided to delete the customer."
-    });
-  }
 
-  try {
-    // Check if the customer exists before attempting to delete
-    const existingCustomer = await customerService.getCustomerByIdOrEmail(customer_id || customer_email);
-    if (!existingCustomer) {
-      return res.status(404).json({
-        error: "Customer not found!"
-      });
-    }
-
-    // Proceed with deleting the customer
-    const deleteResult = await customerService.deleteCustomer(customer_id);
-
-    if (!deleteResult) {
-      return res.status(400).json({
-        error: "Failed to delete the customer!"
-      });
-    }
-
-    // Successful deletion response
-    res.status(200).json({
-      status: "success",
-      message: "Customer deleted successfully!",
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({
-      error: "Something went wrong while deleting the customer!"
-    });
-  }
-}
 // Export the controllers
-module.exports= {
+module.exports = {
   createCustomer,
   getAllCustomers,
-  getCustomerBySearch,
-  getCustomerById,
+  getSingleCustomer,
+  searchCustomers,
   updateCustomer,
-  deleteCustomer,
+  getCustomerById,
 };
-
-

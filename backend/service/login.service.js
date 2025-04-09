@@ -1,6 +1,6 @@
 // Import the query function from the db.config.js file
 const conn = require("../dbconfig/db.config");
-// Import the bcrypt module to do the password comparison
+// Import the bcrypt module for password comparison
 const bcrypt = require("bcrypt");
 // Import the employee service to get employee by email
 const employeeService = require("./employee.service");
@@ -9,14 +9,12 @@ async function logIn(employeeData) {
   try {
     let returnData = {};
 
-    // Fetch the employee data from the service
+    // Fetch the employee data by email
     const employee = await employeeService.getEmployeeByEmail(
       employeeData.employee_email
     );
 
-    console.log("Employee Data Retrieved:", employee); // Debugging line
-
-    // Ensure employee data is an array and has the expected properties
+    // Ensure employee data exists
     if (!employee || employee.length === 0) {
       returnData = {
         status: "fail",
@@ -26,16 +24,15 @@ async function logIn(employeeData) {
       return returnData;
     }
 
-    // Check if employee_password_hashed exists
+    // Ensure employee has the hashed password
     if (!employee[0] || !employee[0].employee_password_hashed) {
-      console.error("Error: employee_password_hashed is missing in DB result");
       return {
         status: "fail",
-        message: "Invalid employee data",
+        message: "Invalid employee data (password missing)",
       };
     }
 
-    // Compare the password with the hashed password stored in the database
+    // Compare the entered password with the stored hashed password
     const passwordMatch = await bcrypt.compare(
       employeeData.employee_password,
       employee[0].employee_password_hashed
@@ -53,11 +50,11 @@ async function logIn(employeeData) {
     // If login is successful, return employee data
     returnData = {
       status: "success",
-      data: employee[0], // You might want to exclude sensitive info like password
+      data: employee[0], // Avoid sending sensitive information like passwords
     };
     return returnData;
   } catch (error) {
-    console.error("Login Error:", error);
+    console.error("Login Service Error:", error);
     return {
       status: "fail",
       message: "Internal server error",
@@ -65,7 +62,7 @@ async function logIn(employeeData) {
   }
 }
 
-// Export the function
+// Export the login function to be used in the controller
 module.exports = {
   logIn,
 };

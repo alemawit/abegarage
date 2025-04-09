@@ -1,99 +1,151 @@
-const  pool  = require('../dbconfig/db.config');
-const { StatusCodes } = require('http-status-codes');
+// Import the query function from the query module
+const conn = require("../dbconfig/db.config");
+const bcrypt = require("bcrypt");
 
- async function postService(req, res) {
-    const { service_name, service_description } = req.body;
-    if (!service_name) {
-        return res
-            .status(StatusCodes.BAD_REQUEST)
-            .json({ msg: 'Please provide a service name' });
+// A function to check if service exists in the database
+async function checkIfServiceExists(service_name) {
+  const query = "SELECT * FROM common_services WHERE service_name = ? ";
+
+  try {
+    const [rows] = await conn.query(query, [service_name]);
+    console.log("Query result:", rows);
+
+    if (!rows || !Array.isArray(rows)) {
+      console.error("Unexpected result format:", rows);
+      return false;
     }
-    try {
-        await pool.query(
-            'INSERT INTO common_services (service_name, service_description) VALUES (?, ?)', 
-            [service_name, service_description]
-        );
-        return res
-            .status(StatusCodes.CREATED)
-            .json({ msg: 'Service posted successfully' });
-    } catch (error) {
-        console.log(error.message);
-        return res
-            .status(StatusCodes.INTERNAL_SERVER_ERROR)
-            .json({ msg: 'An unexpected error occurred' });
-    }
+
+    return rows.length > 0;
+  } catch (error) {
+    console.error("Database query failed:", error);
+    return false;
+  }
 }
 
- async function getService(req, res) {
-    try {
-        const [services] = await pool.query(
-            'SELECT * FROM common_services'
-        );
-        return res.status(StatusCodes.OK).json(services);
-    } catch (error) {
-        console.error(error.message);
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-            msg: 'Something went wrong, try again later!',
-        });
+// A function to create a new service
+async function createService(service) {
+  try {
+    const query =
+      "INSERT INTO common_services (service_name, service_description, service_price) VALUES (?, ?, ?)";
+
+    // Execute the query and wait for the result
+    const rows = await conn.query(query, [
+      service.service_name,
+      service.service_description,
+      service.service_price || 0, // Default to 0 if service_price is not provided
+    ]);
+    console.log("Query result:", rows); // Log the query result
+
+    // Check if rows were affected (i.e., a service was inserted)
+    if (rows.affectedRows === 0) {
+      console.error("No rows inserted!");
+      return false;
     }
+
+    // Return the inserted service data
+    return {
+      service_id: rows.insertId,
+      service_name: service.service_name,
+      service_description: service.service_description,
+      service_price: service.service_price || 0, // Ensure price is set
+    };
+  } catch (err) {
+    console.error("Error creating service:", err);
+    return false; // Return false in case of an error
+  }
 }
 
- async function getSingleService(req, res) {
-    const { id } = req.params;
-    try {
-        const [service] = await pool.query(
-            'SELECT * FROM common_services WHERE service_id = ? ', 
-            [id]
-        );
-        if (service.length === 0) {
-            return res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Service not found' });
-        }
-        return res.status(StatusCodes.OK).json(service);
-    } catch (error) {
-        console.error(error.message);
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-            msg: 'Something went wrong, try again later!',
-        });
-    }
+// A function to get all services from the database
+async function getAllServices() {
+  try {
+    const query = "SELECT * FROM common_services";
+    const rows = await conn.query(query);
+    console.log("Fetched Services:", rows); // Log the fetched data for debugging
+    return rows;
+  } catch (error) {
+    console.error("Error fetching services:", error);
+    return []; // Return an empty array if there is an error
+  }
 }
 
- async function updateService(req, res) {
-    const {service_id, service_name, service_description } = req.body;
-    if (!service_id) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ msg: "Service ID required" });
+// A function to get service by id from the database
+async function getServiceById(service_id) {
+  try {
+    const id = parseInt(service_id, 10);
+    if (isNaN(id) || id <= 0) {
+      console.error("Invalid service_id received:", service_id);
+      return null;
     }
 
-    try {
-        const result = await pool.query(
-          "UPDATE common_services SET service_name = ?, service_description = ? WHERE service_id = ?",
-          [service_name, service_description, service_id]
-        );
+    const query = "SELECT * FROM common_services WHERE service_id = ?";
+    const rows = await conn.query(query, [id]); // ✅ Fix: Remove array destructuring
 
-        if (result.affectedRows === 0) {
-            return res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Service not found' });
-        }
+    console.log("🔹 Query result for ID", service_id, ":", rows);
 
-        return res.status(StatusCodes.OK).json({ msg: 'Service updated successfully' });
-    } catch (error) {
-        console.log(error.message);
-        return res
-            .status(StatusCodes.INTERNAL_SERVER_ERROR)
-            .json({ msg: 'An unexpected error occurred' });
+    if (!Array.isArray(rows) || rows.length === 0) {
+      console.log("No service found in DB for ID:", service_id);
+      return null;
     }
+
+    return rows[0]; // ✅ Return the correct object
+  } catch (error) {
+    console.error(" Error fetching service:", error.message);
+    return null;
+  }
 }
 
- async function deleteService(req, res) {
-    const { id } = req.params;
-    try {
-        await pool.query('DELETE FROM common_services WHERE service_id = ?', [id]);
-        return res.status(StatusCodes.OK).json({ msg: 'Service deleted successfully' });
-    } catch (error) {
-        console.error(error.message);
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-            msg: 'Something went wrong, try again later!',
-        });
+// A function to update service by id in the database
+// A function to update service by id in the database
+async function updateService(service_id, service) {
+  try {
+    // Validate inputs
+    if (
+      !service_id ||
+      !service.service_name ||
+      !service.service_description ||
+      service.service_price == null // explicitly allow 0
+    ) {
+      console.error("Missing parameters:", { service_id, ...service });
+      return null;
     }
+
+    const query = `
+      UPDATE common_services 
+      SET service_name = ?, service_description = ?, service_price = ? 
+      WHERE service_id = ?
+    `;
+
+    const result = await conn.query(query, [
+      service.service_name,
+      service.service_description,
+      service.service_price,
+      service_id,
+    ]);
+
+    console.log("Update Query Result:", result);
+
+    if (result.affectedRows === 0) {
+      // If no rows were updated
+      return null;
+    }
+
+    return {
+      service_id: service_id,
+      service_name: service.service_name,
+      service_description: service.service_description,
+      service_price: service.service_price,
+    };
+  } catch (error) {
+    console.error("Error updating service:", error);
+    return null;
+  }
 }
-module.exports= { postService, getService, getSingleService, updateService, deleteService };
+
+// Export the functions
+module.exports = {
+  checkIfServiceExists,
+  createService,
+  getAllServices,
+  getServiceById,
+  updateService,
+};

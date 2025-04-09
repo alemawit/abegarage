@@ -1,153 +1,91 @@
-// Import the vehicle service
-const vehicleService =require('../service/vehicle.service.js');
-
-// Create the add vehicle controller
-const createVehicle = async (req, res, next) => {
+//import vehicle service
+const vehicleService = require("../service/vehicle.service");
+async function createVehicle(req, res, next) {
   try {
-    // Check if vehicle already exists using its serial number
-    const vehicleExists = await vehicleService.checkIfVehicleExists(req.body.vehicle_serial);
-    if (vehicleExists) {
-      return res.status(400).json({
-        error: "This vehicle is already registered with the provided serial number!",
-      });
-    }
+    const vehicleInfo = req.body;
 
-    // Create the vehicle
-    const vehicleData = req.body;
-    const createdVehicle = await vehicleService.createVehicle(vehicleData);
-
-    if (!createdVehicle) {
-      return res.status(400).json({
-        error: "Failed to add the vehicle!",
-      });
-    }
-
-    // Return success response
-    return res.status(200).json({
-      status: "success",
-      vehicle: createdVehicle,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json({
-      error: "Something went wrong!",
-    });
-  }
-};
-// Create the get vehicles by customer ID controller
-const getVehiclesByCustomerId = async (req, res, next) => {
-  try {
-    const customerId = req.params.customer_id;
-
-    // Get the vehicles for the customer
-    const vehicles = await vehicleService.getVehiclesByCustomerId(customerId);
-
-    if (!vehicles || vehicles.length === 0) {
+    //create the vehicle
+    const createdVehicle = await vehicleService.createVehicle(vehicleInfo);
+    //send the created vehicle back to the client
+    // console.log(createdVehicle);
+    if (!createdVehicle.success) {
       return res.status(404).json({
-        error: "No vehicles found for this customer!",
+        success: false,
+        message: "Failed to add the vehicle",
+      });
+    } else {
+      return res.status(201).json({
+        success: true,
+        message: "Vehicle created successfully",
       });
     }
-
-    return res.status(200).json({
-      status: "success",
-      data: vehicles,
-    });
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({
-      error: "Something went wrong!",
-    });
+    return res.status(400).json({ error: "Something went wrong" });
   }
-};
-// Create the get all vehicles controller
-const getAllVehicles = async (req, res, next) => {
+}
+// create the get all vehicles function
+async function getAllVehicles(req, res, next) {
   try {
-    const vehicles = await vehicleService.getAllVehicles();
-
-    if (!vehicles || vehicles.length === 0) {
-      return res.status(404).json({
-        error: "No vehicles found!",
-      });
-    }
-
-    return res.status(200).json({
-      status: "success",
-      data: vehicles,
+    const result = await vehicleService.getAllVehicles();
+    // Always return 200 with consistent structure
+    res.status(200).json({
+      success: result.success,
+      message: result.message || "Vehicles retrieved successfully",
+      data: result.data, // Always array
     });
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({
-      error: "Something went wrong!",
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      data: [], // Ensure array even on error
     });
   }
-};
-// Create the get vehicle by ID controller
-const getVehicleById = async (req, res, next) => {
+}
+
+async function getVehicle(req, res, next) {
   try {
-    const vehicleId = req.params.id;
+    const customer_id = req.query.customer_id;
+    const result = await vehicleService.getVehicle(customer_id);
 
-    // Get the vehicle by ID
-    const vehicle = await vehicleService.getVehicleById(vehicleId);
-
-    if (!vehicle || vehicle.length === 0) {
-      return res.status(404).json({
-        error: "Vehicle not found!",
-      });
-    }
-
-    return res.status(200).json({
-      status: "success",
-      data: vehicle[0],
+    // Always return 200 with consistent structure
+    console.log(result.success);
+    res.status(200).json({
+      success: result.success,
+      message: result.message || "Vehicles retrieved successfully",
+      data: result.data, // Always array
     });
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({
-      error: "Something went wrong!",
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      data: [], // Ensure array even on error
     });
   }
-};
-// Create the update vehicle controller
-const updateVehicle = async (req, res, next) => {
+}
+//create the update vehicle function
+async function updateVehicle(req, res, next) {
   try {
-    const vehicleId = req.params.id;
-    const updatedVehicleData = {...req.body};
-
-    // Check if the vehicle exists
-    const vehicleExists = await vehicleService.getVehicleById(vehicleId);
-    if (!vehicleExists || vehicleExists.length === 0) {
+    const vehicleInfo = req.body;
+    const updatedVehicle = await vehicleService.updateVehicle(vehicleInfo);
+    if (!updatedVehicle.success) {
       return res.status(404).json({
-        error: "Vehicle not found!",
+        success: false,
+        message: "Failed to update the vehicle",
+      });
+    } else {
+      return res.status(200).json({
+        success: true,
+        message: "Vehicle updated successfully",
       });
     }
-
-    // Update the vehicle
-    const updatedVehicle = await vehicleService.updateVehicle(vehicleId, updatedVehicleData);
-
-    if (!updatedVehicle) {
-      return res.status(400).json({
-        error: "Failed to update the vehicle!",
-      });
-    }
-
-    // Return success response
-    return res.status(200).json({
-      status: "success",
-      vehicle: updatedVehicle,
-    });
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({
-      error: "Something went wrong!",
-    });
+    return res.status(400).json({ error: "Something went wrong" });
   }
-};
-// Export the vehicle controller functions
-const vehicleController = {
+}
+
+module.exports = {
   createVehicle,
-  getVehiclesByCustomerId,
   getAllVehicles,
-  getVehicleById,
-  updateVehicle, 
+  getVehicle,
+  updateVehicle,
 };
-
-module.exports= vehicleController;

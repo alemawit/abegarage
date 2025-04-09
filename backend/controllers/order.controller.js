@@ -1,92 +1,168 @@
-//import order from order.service
-const { createOrderService, getOrderByIdService, getAllOrdersService, deleteOrderService } = require('../service/order.service');
+// Import order service
+const orderService = require("../service/order.service");
+const conn = require("../dbconfig/db.config"); // Ensure this is correct
 
-// Create a new order
-const createOrder = async (req, res) => {
+// Create the add order controller
+async function createOrder(req, res, next) {
   try {
-    console.log("Received Request Body:", req.body); // ✅ Debugging log
+    const orderData = req.body;
 
-    const { customer_id, employee_id, order_status, order_data, vehicle_id } =
-      req.body;
+    // Create the order
+    const order = await orderService.createOrder(orderData);
 
-    // ✅ Validate input with detailed error messages
-    if (!customer_id)
-      return res.status(400).json({ error: "customer_id is required" });
-    if (!employee_id)
-      return res.status(400).json({ error: "employee_id is required" });
-    if (!order_status)
-      return res.status(400).json({ error: "order_status is required" });
-    if (!vehicle_id)
-      return res.status(400).json({ error: "vehicle_id is required" });
-    if (!order_data || typeof order_data !== "object") {
-      return res
-        .status(400)
-        .json({ error: "order_data must be a valid object" });
+    if (!order) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Failed to create the order!",
+      });
     }
 
-    // You can also check if the `vehicle_id` exists in the database before proceeding
-    // Example:
-    // const vehicleExists = await checkVehicleExistence(vehicle_id);
-    // if (!vehicleExists) {
-    //   return res.status(400).json({ error: "vehicle_id does not exist in the database" });
-    // }
-
-    const order = await createOrderService(
-      customer_id,
-      employee_id,
-      order_status,
-      order_data,
-      vehicle_id // Pass vehicle_id to the service function
-    );
-
-    return res.status(201).json(order);
-  } catch (err) {
-    console.error("Error creating order:", err); // ✅ Log the full error
-    return res.status(500).json({ error: err.message });
+    return res.status(201).json({
+      status: "success",
+      message: "Order created successfully!",
+      data: order,
+    });
+  } catch (error) {
+    console.error("Error creating order:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Something went wrong!",
+    });
   }
-};
+}
 
-
-
-
-// Get a specific order
-const getOrderById = async (req, res) => {
-  const { order_id } = req.params;
-
+// Create a getAllOrders controller
+async function getAllOrders(req, res, next) {
   try {
-    const order = await getOrderByIdService(order_id);
-    return res.status(200).json(order);
-  } catch (err) {
-    if (err.message === "Order not found") {
-      return res.status(404).json({ error: err.message });
+    const orders = await orderService.getAllOrders();
+
+    if (!orders || orders.length === 0) {
+      return res.status(404).json({
+        status: "fail",
+        message: "No orders found!",
+      });
     }
-    return res.status(500).json({ error: err.message });
+
+    return res.status(200).json({
+      status: "success",
+      data: orders,
+    });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Something went wrong!",
+    });
   }
-};
+}
 
-// Get all orders
-const getAllOrders = async (req, res) => {
+// Create the getSingleOrder controller
+async function getSingleOrder(req, res, next) {
   try {
-    const orders = await getAllOrdersService();
-    return res.status(200).json(orders);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-};
+    const orderId = parseInt(req.params.id); // Get order ID from request parameters
 
-// Delete an order
-const deleteOrder = async (req, res) => {
-  const { order_id } = req.params;
+    // Fetch the order by ID
+    const order = await orderService.getSingleOrder(orderId);
 
-  try {
-    const result = await deleteOrderService(order_id);
-    return res.status(200).json(result);
-  } catch (err) {
-    if (err.message === "Order not found") {
-      return res.status(404).json({ error: err.message });
+    if (!order) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Order not found!",
+      });
     }
-    return res.status(500).json({ error: err.message });
-  }
-};
 
-module.exports = {  createOrder, getOrderById, getAllOrders, deleteOrder };
+    return res.status(200).json({
+      status: "success",
+      data: order,
+    });
+  } catch (error) {
+    console.error("Error fetching order:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Something went wrong!",
+    });
+  }
+}
+
+// Create the updateOrder controller
+async function updateOrder(req, res, next) {
+  try {
+    const orderId = parseInt(req.params.id); // Get order ID from request parameters
+    const updateData = req.body;
+
+    // Check if order exists
+    const existingOrder = await orderService.getSingleOrder(orderId);
+    if (!existingOrder) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Order not found!",
+      });
+    }
+
+    // Update the order
+    const updatedOrder = await orderService.updateOrder(orderId, updateData);
+    if (!updatedOrder) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Failed to update the order!",
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      message: "Order updated successfully!",
+      data: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Error updating order:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Something went wrong!",
+    });
+  }
+}
+
+// Create the deleteOrder controller
+async function deleteOrder(req, res, next) {
+  try {
+    const orderId = parseInt(req.params.id); // Get order ID from request parameters
+
+    // Check if order exists
+    const existingOrder = await orderService.getSingleOrder(orderId);
+    if (!existingOrder) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Order not found!",
+      });
+    }
+
+    // Delete the order
+    const deleted = await orderService.deleteOrder(orderId);
+    if (!deleted) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Failed to delete the order!",
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      message: "Order deleted successfully!",
+    });
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Something went wrong!",
+    });
+  }
+}
+
+// Export the controllers
+module.exports = {
+  createOrder,
+  getAllOrders,
+  getSingleOrder,
+  updateOrder,
+  deleteOrder,
+};

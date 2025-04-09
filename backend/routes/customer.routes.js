@@ -1,13 +1,21 @@
 const express = require("express");
-
 const router = express.Router();
-//import the customer controller
+
+// Import customer controller functions
 const {
   createCustomer,
   getAllCustomers,
   getCustomerById,
   updateCustomer,
 } = require("../controllers/customer.controller");
+
+// Check if controller functions are properly imported
+console.log("Imported functions:", {
+  createCustomer,
+  getAllCustomers,
+  getCustomerById,
+  updateCustomer,
+});
 
 // CREATE a new customer
 router.post("/api/customer", createCustomer);

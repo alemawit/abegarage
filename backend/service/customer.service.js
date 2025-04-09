@@ -1,211 +1,285 @@
-// Import the query function from the db.config.js file 
-// import pool from "../config/dbConfig.js";
-const exp = require("constants");
-const pool= require("../dbconfig/db.config.js");
-// Import the crypto module 
-// import crypto from 'crypto';
-const crypto = require('crypto');
-const { Module } = require("module");
-// A function to check if customer exists in the database
-// const checkIfCustomerExists = async (email) => {
-//   const query = "SELECT * FROM customer_identifier WHERE customer_email = ? ";
+const db = require("../dbconfig/db.config"); // Import the query function from db.config.js
+const bcrypt = require("bcrypt");
 
-//   const rows = await pool.query(query, [email]);
-//   console.log("Checking if email exists:", email, rows); // Debugging log
-//   if (rows.length > 0) {
-//     return true;
-//   }
-//   return false;
-// }
-const checkIfCustomerExists = async (email) => {
-  console.log("Checking if email exists:", email);
+// Function to check if a customer exists by email or phone number
+const checkIfCustomerExists = async (customerEmail, customerPhoneNumber) => {
+  try {
+    const query = `
+      SELECT * FROM customer_identifier 
+      WHERE customer_email = ? OR customer_phone_number = ?
+    `;
+    const rows = await db.query(query, [customerEmail, customerPhoneNumber]);
+    console.log("Database Query Result:", rows);
 
-  const query = "SELECT * FROM customer_identifier WHERE customer_email = ?";
-  const [rows] = await pool.query(query, [email]); // Ensure only the first element is used
+    if (rows.length === 0) {
+      return null; // No customer found
+    }
 
-  console.log("Query result:", rows); // Debugging log
-
-  return rows.length > 0;
+    return rows[0]; // Return the first customer if found
+  } catch (error) {
+    console.error("Error checking customer existence:", error);
+    throw new Error("Database error while checking customer existence.");
+  }
 };
 
-// A function to create a new customer
-const createCustomer = async (customer) => {
-   console.log("Creating customer:", customer.customer_email);
-  let createdCustomer = {};
+// Function to create a new customer
+const createCustomer = async (customerData) => {
   try {
-    // const currentDate = new Date()
-    const customer_added_date = new Date()
-      .toISOString()
-      .slice(0, 19)
-      .replace("T", " ");
-  //Create a hash for the customer
-  const customer_hash = crypto.createHash('sha256').update(customer.customer_email).digest("hex");
-  //create a customer identifier
-  const query =
-    "INSERT INTO customer_identifier (customer_email,  customer_phone_number,customer_added_date, customer_hash) VALUES (?,?,?,?)";
-  const [rows] = await pool.query(query, [customer.customer_email, customer.customer_phone_number,customer_added_date, customer_hash]);
-  console.log("info rows",rows)
-  const customer_id = rows.insertId;
-  //create a customer info
-  const customer_active_status = 1;
-  const query2 =
-    "INSERT INTO customer_info (customer_id, customer_first_name, customer_last_name,customer_active_status) VALUES (?,?,?,?)";
-  const rows2 = await pool.query(query2, [
-    customer_id,
-    customer.customer_first_name,
-    customer.customer_last_name,
-    customer_active_status,
-  ]);
-  console.log("info rows 2:",rows2);
-  createdCustomer = {
-    customer_id: customer_id,
-    customer_first_name: customer.customer_first_name,
-    customer_last_name: customer.customer_last_name,
-    customer_email: customer.customer_email,
-    customer_phone_number: customer.customer_phone_number,
-    customer_active_status: customer_active_status,
-    customer_hash: customer_hash,
-  };
-} catch (error) {
-  console.log(error);
-}
-  // Return the customer object 
-  return createdCustomer;
+    // If no password is provided, set customer_hash to an empty string
+    let customerHash = "";
+    if (customerData.customer_password) {
+      const salt = await bcrypt.genSalt(10);
+      customerHash = await bcrypt.hash(customerData.customer_password, salt);
+    }
 
-}
-// A function to get customer by email
-const getCustomerByEmail = async (customer_email) => {
-  const query = "SELECT * FROM customer_identifier INNER JOIN customer_info ON customer_identifier.customer_id = customer_info.customer_id WHERE customer_identifier.customer_email = ?";
-  const rows = await pool.query(query, [customer_email]);
-  return rows;
-}
-// A function to get all customers
-const getAllCustomers = async () => {
-  const query = "SELECT * FROM customer_identifier INNER JOIN customer_info ON customer_identifier.customer_id = customer_info.customer_id ORDER BY customer_identifier.customer_id DESC limit 10";
-  const [rows] = await pool.query(query);
-  return rows;
-}
-//A function to get customer by first_name or last_name or email or phone_number
-const getCustomerBySearch = async (search) => {
-  const query = "SELECT * FROM customer_identifier INNER JOIN customer_info ON customer_identifier.customer_id = customer_info.customer_id WHERE customer_info.customer_first_name LIKE ? OR customer_info.customer_last_name LIKE ? OR customer_identifier.customer_email LIKE ? OR customer_identifier.customer_phone_number LIKE ?";
-  const rows = await pool.query(query, [search, search, search, search]);
-  return rows;
-}
-// A function to get customer by ID
-const getCustomerById = async (customer_id) => {
-  const query = "SELECT * FROM customer_identifier INNER JOIN customer_info ON customer_identifier.customer_id = customer_info.customer_id WHERE customer_identifier.customer_id = ?";
-  const [rows] = await pool.query(query, [customer_id]);
-  return rows;
-}
-// A function to get customer by ID or email
-const getCustomerByIdOrEmail = async (identifier) => {
-  let query;
-  let queryParams;
+    // Log the data before the query for debugging
+    console.log("Customer Data for Insert:", customerData);
 
-  // Check if the identifier is an email (assumed to be a string) or an ID (assumed to be a number)
-  if (typeof identifier === 'string') {
-    // If the identifier is a string, assume it's an email
-    query = "SELECT * FROM customer_identifier INNER JOIN customer_info ON customer_identifier.customer_id = customer_info.customer_id WHERE customer_identifier.customer_email = ?";
-    queryParams = [identifier];
-  } else if (typeof identifier === 'number') {
-    // If the identifier is a number, assume it's a customer_id
-    query = "SELECT * FROM customer_identifier INNER JOIN customer_info ON customer_identifier.customer_id = customer_info.customer_id WHERE customer_identifier.customer_id = ?";
-    queryParams = [identifier];
-  } else {
-    throw new Error("Invalid identifier type. Must be either a customer_id (number) or customer_email (string).");
+    // Insert into customer_identifier table
+    const query1 = `
+      INSERT INTO customer_identifier (customer_email, customer_phone_number, customer_hash) 
+      VALUES (?, ?, ?)
+    `;
+    const result1 = await db.query(query1, [
+      customerData.customer_email,
+      customerData.customer_phone_number,
+      customerHash, // This will be an empty string if no password is provided
+    ]);
+
+    // Get the inserted customer ID
+    const customerId = result1.insertId;
+
+    // Insert into customer_info table
+    const query2 = `
+      INSERT INTO customer_info (customer_id, customer_first_name, customer_last_name, active_customer_status)
+      VALUES (?, ?, ?, ?)
+    `;
+    await db.query(query2, [
+      customerId,
+      customerData.customer_first_name || null, // Ensure null if not provided
+      customerData.customer_last_name || null, // Ensure null if not provided
+      customerData.active_customer_status || 0, // Fallback to 0 if missing
+    ]);
+
+    // Insert into customer_vehicle_info table (if vehicle data is provided)
+    if (customerData.vehicle_info && Array.isArray(customerData.vehicle_info)) {
+      for (let vehicle of customerData.vehicle_info) {
+        const query3 = `
+          INSERT INTO customer_vehicle_info (customer_id, vehicle_year, vehicle_make, vehicle_model, vehicle_type,
+                                              vehicle_mileage, vehicle_tag, vehicle_serial, vehicle_color)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        await db.query(query3, [
+          customerId,
+          vehicle.vehicle_year || null,
+          vehicle.vehicle_make || null,
+          vehicle.vehicle_model || null,
+          vehicle.vehicle_type || null,
+          vehicle.vehicle_mileage || null,
+          vehicle.vehicle_tag || null,
+          vehicle.vehicle_serial || null,
+          vehicle.vehicle_color || null,
+        ]);
+      }
+    }
+
+    return { status: "success", message: "Customer created successfully!" };
+  } catch (error) {
+    console.error("Error creating customer:", error);
+    throw new Error("Database error while creating customer.");
   }
-
-  // Run the query
-  const rows = await pool.query(query, queryParams);
-  return rows;
-}
-// A function to update customer details by customer_id
-const updateCustomer = async (customer_id, updatedDetails) => {
+};
+// Function to get all customers and their details
+const getAllCustomers = async () => {
   try {
-    // Construct the update query for customer_identifier (email, phone number)
-    const updateIdentifierQuery = `
-      UPDATE customer_identifier 
-      SET customer_email = ?, customer_phone_number = ? 
-      WHERE customer_id = ?
+    // Corrected SQL query to retrieve all customer details by joining customer_identifier and customer_info tables
+    const query = `
+      SELECT ci.customer_id, ci.customer_email, ci.customer_phone_number, ci.customer_added_date, 
+             ci.customer_hash, c.customer_first_name, c.customer_last_name, 
+             c.active_customer_status
+      FROM customer_identifier ci
+      LEFT JOIN customer_info c ON ci.customer_id = c.customer_id
     `;
-    const identifierParams = [
-      updatedDetails.customer_email,
-      updatedDetails.customer_phone_number,
-      customer_id
-    ];
+    // Execute the query and get all customer records
+    const rows = await db.query(query);
 
-    // Execute the query to update customer identifier details
-    await pool.query(updateIdentifierQuery, identifierParams);
-
-    // Construct the update query for customer_info (first name, last name, active status)
-    const updateInfoQuery = `
-      UPDATE customer_info 
-      SET customer_first_name = ?, customer_last_name = ?, customer_active_status = ?
-      WHERE customer_id = ?
+    // Return the rows (customers) if found, otherwise return an empty array
+    return rows;
+  } catch (error) {
+    console.error("Error fetching customers:", error);
+    throw new Error("Database error while fetching customers.");
+  }
+};
+// Function to get a single customer by ID and their details
+const getSingleCustomer = async (customerId) => {
+  try {
+    // SQL query to retrieve customer details and vehicle data
+    const query = `
+      SELECT 
+        ci.customer_id, 
+        ci.customer_email, 
+        ci.customer_phone_number, 
+        ci.customer_added_date, 
+        ci.customer_hash, 
+        c.customer_first_name, 
+        c.customer_last_name, 
+        c.active_customer_status,
+        v.vehicle_id, 
+        v.vehicle_year, 
+        v.vehicle_make, 
+        v.vehicle_model, 
+        v.vehicle_type, 
+        v.vehicle_mileage, 
+        v.vehicle_tag, 
+        v.vehicle_serial, 
+        v.vehicle_color
+      FROM customer_identifier ci
+      LEFT JOIN customer_info c ON ci.customer_id = c.customer_id
+      LEFT JOIN customer_vehicle_info v ON ci.customer_id = v.customer_id
+      WHERE ci.customer_id = ?
     `;
-    const infoParams = [
-      updatedDetails.customer_first_name,
-      updatedDetails.customer_last_name,
-      updatedDetails.customer_active_status,
-      customer_id
-    ];
 
-    // Execute the query to update customer info details
-    await pool.query(updateInfoQuery, infoParams);
+    // Execute the query to fetch the customer record along with vehicle data
+    const rows = await db.query(query, [customerId]);
 
-    // Return the updated customer details
-    return {
-      customer_id,
-      customer_first_name: updatedDetails.customer_first_name,
-      customer_last_name: updatedDetails.customer_last_name,
-      customer_email: updatedDetails.customer_email,
-      customer_phone_number: updatedDetails.customer_phone_number,
-      customer_active_status: updatedDetails.customer_active_status
-    };
+    // If no customer found, return null
+    if (rows.length === 0) {
+      return null;
+    }
+
+    // Return the first (and only) customer found, including vehicle data
+    return rows[0];
+  } catch (error) {
+    console.error("Error fetching customer:", error);
+    throw new Error("Database error while fetching customer.");
+  }
+};
+//Create the searchCustomers function to get the customer from teh database
+async function searchCustomers(searchQuery) {
+  try {
+    const searchTerm = `%${searchQuery}%`;
+    const query = `
+      SELECT 
+        customer_info.*,
+        customer_identifier.customer_email,
+        customer_identifier.customer_phone_number
+      FROM customer_info
+      INNER JOIN customer_identifier 
+        ON customer_info.customer_id = customer_identifier.customer_id
+      WHERE 
+        customer_identifier.customer_email LIKE ? OR
+        customer_identifier.customer_phone_number LIKE ? OR
+        customer_info.customer_first_name LIKE ? OR
+        customer_info.customer_last_name LIKE ?
+      ORDER BY customer_identifier.customer_id DESC
+      LIMIT 10
+    `;
+
+    const rows = await conn.query(query, [
+      searchTerm,
+      searchTerm,
+      searchTerm,
+      searchTerm,
+    ]);
+
+    return rows;
+  } catch (error) {
+    console.error("Database search error:", error.message);
+    throw new Error("Failed to execute customer search");
+  }
+}
+
+// Function to update a customer by ID
+const updateCustomer = async (customerId, customerData) => {
+  try {
+    // Initialize the update query with basic structure
+    let updateQuery = "UPDATE customer_identifier SET ";
+    const updateValues = [];
+
+    // Only add to query if data is provided
+    if (customerData.customer_email) {
+      updateQuery += "customer_email = ?, ";
+      updateValues.push(customerData.customer_email);
+    }
+
+    if (customerData.customer_phone_number) {
+      updateQuery += "customer_phone_number = ?, ";
+      updateValues.push(customerData.customer_phone_number);
+    }
+
+    // Remove the trailing comma and space from the query
+    updateQuery = updateQuery.slice(0, -2);
+
+    // Add the WHERE clause to the query
+    updateQuery += " WHERE customer_id = ?";
+    updateValues.push(customerId);
+
+    // Execute the query for customer_identifier table
+    await db.query(updateQuery, updateValues);
+
+    // Now, build the query for the customer_info table (first name, last name, status)
+    let updateQuery2 = "UPDATE customer_info SET ";
+    const updateValues2 = [];
+
+    if (customerData.customer_first_name) {
+      updateQuery2 += "customer_first_name = ?, ";
+      updateValues2.push(customerData.customer_first_name);
+    }
+
+    if (customerData.customer_last_name) {
+      updateQuery2 += "customer_last_name = ?, ";
+      updateValues2.push(customerData.customer_last_name);
+    }
+
+    if (customerData.active_customer_status !== undefined) {
+      updateQuery2 += "active_customer_status = ?, ";
+      updateValues2.push(customerData.active_customer_status);
+    }
+
+    // Remove the trailing comma and space from the query
+    updateQuery2 = updateQuery2.slice(0, -2);
+
+    updateQuery2 += " WHERE customer_id = ?";
+    updateValues2.push(customerId);
+
+    // Execute the query for customer_info table
+    await db.query(updateQuery2, updateValues2);
+
+    // Handle vehicle info updates if provided
+    if (customerData.vehicle_info && Array.isArray(customerData.vehicle_info)) {
+      for (let vehicle of customerData.vehicle_info) {
+        const query3 = `
+          UPDATE customer_vehicle_info 
+          SET vehicle_year = ?, vehicle_make = ?, vehicle_model = ?, vehicle_type = ?,
+              vehicle_mileage = ?, vehicle_tag = ?, vehicle_serial = ?, vehicle_color = ? 
+          WHERE customer_id = ?;
+        `;
+        await db.query(query3, [
+          vehicle.vehicle_year || null,
+          vehicle.vehicle_make || null,
+          vehicle.vehicle_model || null,
+          vehicle.vehicle_type || null,
+          vehicle.vehicle_mileage || null,
+          vehicle.vehicle_tag || null,
+          vehicle.vehicle_serial || null,
+          vehicle.vehicle_color || null,
+          customerId,
+        ]);
+      }
+    }
+
+    return { status: "success", message: "Customer updated successfully!" };
   } catch (error) {
     console.error("Error updating customer:", error);
-    throw new Error("Failed to update customer");
+    throw new Error("Database error while updating customer.");
   }
-}
-// A function to delete a customer by customer_id
-const deleteCustomer = async (customer_id) => {
-  try {
-    // Begin a transaction to ensure both deletions are successful
-    await pool.beginTransaction();
+};
 
-    // First, delete the customer from customer_info
-    const deleteInfoQuery = "DELETE FROM customer_info WHERE customer_id = ?";
-    await pool.query(deleteInfoQuery, [customer_id]);
-
-    // Then, delete the customer from customer_identifier
-    const deleteIdentifierQuery = "DELETE FROM customer_identifier WHERE customer_id = ?";
-    await pool.query(deleteIdentifierQuery, [customer_id]);
-
-    // Commit the transaction if both deletions are successful
-    await pool.commit();
-
-    // Return a success message
-    return { message: `Customer with ID ${customer_id} deleted successfully.` };
-  } catch (error) {
-    // If an error occurs, rollback the transaction
-    await pool.rollback();
-    console.error("Error deleting customer:", error);
-    throw new Error("Failed to delete customer");
-  }
-}
-// Export the functions
-const customerService = {
+module.exports = {
   checkIfCustomerExists,
   createCustomer,
-  getCustomerByEmail,
   getAllCustomers,
-  getCustomerBySearch,
-  getCustomerById,
-  getCustomerByIdOrEmail,
+  getSingleCustomer,
+  searchCustomers,
   updateCustomer,
-  deleteCustomer
-}
-module.exports= customerService;
-
-
-
+};
