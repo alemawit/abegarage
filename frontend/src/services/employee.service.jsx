@@ -1,7 +1,5 @@
 // Import API URL from environment variables correctly
 const api_url = import.meta.env.VITE_REACT_APP_URL;
-// Check if the API URL is defined
-//console.log("API URL:", api_url);
 
 // A function to send a POST request to create a new employee
 const createEmployee = async (formData, loggedInEmployeeToken) => {
@@ -10,13 +8,12 @@ const createEmployee = async (formData, loggedInEmployeeToken) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-access-token": loggedInEmployeeToken,
+        Authorization: `Bearer ${loggedInEmployeeToken}`, // Use Bearer token
       },
       body: JSON.stringify(formData),
     };
-console.log(api_url);
+    console.log(api_url);
     const response = await fetch(`${api_url}/api/employee`, requestOptions);
-// console.log(response);
     if (!response.ok) {
       const errorMessage = await response.text();
       throw new Error("Not an admin!");
@@ -29,64 +26,65 @@ console.log(api_url);
   }
 };
 
-// get all employees
-
+// Function to get all employees
 const getAllEmployees = async (token) => {
   const requestOptions = {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "x-access-token": token,
+      Authorization: `Bearer ${token}`, // Use Bearer token
     },
   };
   const response = await fetch(`${api_url}/api/employee`, requestOptions);
   return response;
 };
 
+// Function to get an employee by ID
 const getEmployeeById = async (employee_id, token) => {
   try {
     const response = await fetch(`${api_url}/api/employee/${employee_id}`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`, // Use Bearer token
       },
     });
 
     if (!response.ok) {
-      // Log the response text if status is not OK
       const errorText = await response.text();
-      console.error("Error response:", errorText); // Log the response body for debugging
+      console.error("Error response:", errorText);
       throw new Error(`Failed to fetch employee: ${response.statusText}`);
     }
 
-    // Check the response content type (ensure it's JSON)
     const contentType = response.headers.get("Content-Type");
     if (!contentType || !contentType.includes("application/json")) {
       throw new Error("Unexpected response format, expected JSON.");
     }
 
-    // Parse and return the JSON response
     const data = await response.json();
     return data;
   } catch (error) {
     console.error("Error while fetching employee:", error);
-    throw error; // Rethrow to let the caller handle it
+    throw error;
   }
 };
 
+// Function to update an employee
 const updateEmployee = async (employee_id, employeeData, token) => {
   try {
     const response = await fetch(`${api_url}/api/employees/${employee_id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // Ensure token is passed
+        Authorization: `Bearer ${token}`, // Use Bearer token
       },
       body: JSON.stringify(employeeData),
     });
-
+console.log(response);
     if (!response.ok) {
-      throw new Error(`Failed to update employee: ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({})); // Catch JSON parsing errors
+      throw new Error(
+        `Failed to update employee: ${errorData.message || response.statusText}`
+      );
     }
 
     const data = await response.json();
@@ -97,12 +95,13 @@ const updateEmployee = async (employee_id, employeeData, token) => {
   }
 };
 
+// Function to delete an employee
 const deleteEmployee = async (employee_id, token) => {
   try {
     const response = await fetch(`${api_url}/api/employees/${employee_id}`, {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`, // Use Bearer token
         "Content-Type": "application/json",
       },
     });

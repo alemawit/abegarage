@@ -16,14 +16,14 @@ const EmployeeEdit = () => {
       try {
         console.log("Fetching employee data...");
         const data = await employeeService.getEmployeeById(employee_id);
-        console.log("Fetched employee data:", data);
+        console.log("Fetched employee data:", data.data);
 
         if (!data) {
           setError("Failed to fetch employee data.");
           return;
         }
 
-        setEmployee(data);
+        setEmployee(data.data);
       } catch (err) {
         console.error("Error while fetching employee:", err);
         if (err instanceof SyntaxError) {

@@ -1,7 +1,7 @@
-const api_url = import.meta.env.VITE_API_BASE_URL;
+// Import from the env
+const api_url = import.meta.env.VITE_REACT_APP_URL;
 
 // Function to create a new customer
-
 const createCustomer = async (formData, token) => {
   try {
     console.log("Sending Data:", formData);
@@ -10,7 +10,7 @@ const createCustomer = async (formData, token) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-access-token": token,
+        Authorization: `Bearer ${token}`, // Use Bearer token
       },
       body: JSON.stringify(formData),
     });
@@ -22,7 +22,7 @@ const createCustomer = async (formData, token) => {
     }
 
     console.log("Customer Created Successfully:", data);
-    return data; //  Return parsed response
+    return data; // Return parsed response
   } catch (error) {
     console.error("Fetch request failed:", error);
     throw error;
@@ -36,18 +36,22 @@ const getAllCustomers = async (token) => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "x-access-token": token,
+        Authorization: `Bearer ${token}`, // Use Bearer token
       },
     });
 
+    // Log the response status and body
+    console.log("Response Status:", response.status);
+    const data = await response.json(); // Read the response body once
+
     if (!response.ok) {
-      throw new Error("Failed to fetch customers.");
+      throw new Error(data.message || "Failed to fetch customers.");
     }
 
-    return response;
+    return data.data; // Return the customer data directly
   } catch (error) {
     console.error("Fetch request failed:", error);
-    throw error;
+    throw error; // Re-throw the error to be handled in the calling function
   }
 };
 
@@ -58,7 +62,7 @@ const getCustomerById = async (customerId, token) => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "x-access-token": token,
+        Authorization: `Bearer ${token}`, // Use Bearer token
       },
     });
 
@@ -78,14 +82,13 @@ const getCustomerById = async (customerId, token) => {
 // Function to search customers based on query (name, email, phone)
 const customerSearch = async (searchQuery, token) => {
   try {
-    // Assuming the server supports searching via query params
     const response = await fetch(
       `${api_url}/api/customers?search=${searchQuery}`,
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "x-access-token": token,
+          Authorization: `Bearer ${token}`, // Use Bearer token
         },
       }
     );
@@ -109,7 +112,7 @@ const updateCustomer = async (customerId, formData, token) => {
       method: "PUT", // Use PUT method for updating existing resources
       headers: {
         "Content-Type": "application/json",
-        "x-access-token": token,
+        Authorization: `Bearer ${token}`, // Use Bearer token
       },
       body: JSON.stringify(formData), // Send updated data in the request body
     });

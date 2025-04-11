@@ -57,7 +57,7 @@ function LoginForm() {
         if (response.status === "success") {
           // Save the user in the local storage
           if (response.data.employee_token) {
-            console.log(response.data);
+            console.log(response.data.employee_token);
             localStorage.setItem("employee", JSON.stringify(response.data));
           }
           // Redirect the user to the dashboard

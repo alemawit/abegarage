@@ -36,7 +36,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/admin/services" element={<Services />} />
 
-        <Route path="/Unautorized" element={<Unautorized />} />
+        <Route path="/Unauthorized" element={<Unautorized />} />
         <Route
           path="/admin/orders"
           element={
@@ -65,7 +65,7 @@ function App() {
         <Route
           path="/admin/customer"
           element={
-            <PrivateAuthRoute roles={[2, 3]}>
+            <PrivateAuthRoute roles={[1]}>
               <AddCustomers />
             </PrivateAuthRoute>
           }

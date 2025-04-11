@@ -1,7 +1,7 @@
-//Import from the env
+// Import from the env
+const api_url = import.meta.env.VITE_REACT_APP_URL;
 
-const api_url = import.meta.env.VITE_API_BASE_URL;
-//Create a function to send a service create request
+// Create a function to send a service create request
 const createService = async (formServiceData, loggedInEmployeeToken) => {
   console.log(formServiceData.service_price);
   console.log(loggedInEmployeeToken);
@@ -10,10 +10,11 @@ const createService = async (formServiceData, loggedInEmployeeToken) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-access-token": loggedInEmployeeToken,
+        Authorization: `Bearer ${loggedInEmployeeToken}`, // Use Bearer token
       },
       body: JSON.stringify(formServiceData),
     });
+
     if (!response.ok) {
       const errorData = await response.json();
       console.log(errorData.message);
@@ -25,19 +26,21 @@ const createService = async (formServiceData, loggedInEmployeeToken) => {
     throw error;
   }
 };
+
+// Function to get all services
 const getAllServices = async (loggedInEmployeeToken) => {
   try {
     const response = await fetch(`${api_url}/api/service`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "x-access-token": loggedInEmployeeToken,
+        Authorization: `Bearer ${loggedInEmployeeToken}`, // Use Bearer token
       },
     });
 
     // Check if the response status is OK
     if (!response.ok) {
-      const errorData = await response.json(); // Extract the error message from the response
+      const errorData = await response.json();
       throw new Error(errorData.error || "Failed to fetch services");
     }
 
@@ -62,14 +65,14 @@ const updateService = async (serviceData, loggedEmployeeToken) => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "x-access-token": loggedEmployeeToken,
+          Authorization: `Bearer ${loggedEmployeeToken}`, // Use Bearer token
         },
         body: JSON.stringify(serviceData),
       }
     );
 
     if (!response.ok) {
-      const errorData = await response.json(); // This line is risky if response is HTML
+      const errorData = await response.json();
       throw new Error(errorData.error || "Failed to update service");
     }
 
@@ -80,7 +83,7 @@ const updateService = async (serviceData, loggedEmployeeToken) => {
   }
 };
 
-//exports the service
+// Exports the service
 const serviceService = {
   createService,
   getAllServices,

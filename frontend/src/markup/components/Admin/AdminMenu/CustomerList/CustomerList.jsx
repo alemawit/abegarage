@@ -33,36 +33,24 @@ const CustomerList = () => {
     const fetchCustomers = async () => {
       try {
         const res = await customerService.getAllCustomers(token);
-        if (!res.ok) {
-          setApiError(true);
-          setApiErrorMessage(
-            res.status === 401
-              ? "Please log in again."
-              : res.status === 403
-              ? "You are not authorized."
-              : "Please try again later."
-          );
-        }
-        const data = await res.json();
+        setCustomers(res); // Directly set customers
 
-        if (data.data.length !== 0) {
-          // Sort by newest first
-          const sortedCustomers = data.data.sort(
-            (a, b) =>
-              new Date(b.customer_added_date) - new Date(a.customer_added_date)
-          );
-          setCustomers(sortedCustomers);
+        if (res.length === 0) {
+          setApiError(true);
+          setApiErrorMessage("No customers found.");
         }
       } catch (error) {
         setApiError(true);
-        setApiErrorMessage("Something went wrong. Please try again.");
+        setApiErrorMessage(
+          error.message || "Something went wrong. Please try again."
+        );
       } finally {
         setLoading(false);
       }
     };
+
     fetchCustomers();
   }, [token]);
-
   // Function to handle Edit button click
   const handleEdit = (customer_id) => {
     navigate(`/customer/edit/${customer_id}`);

@@ -24,6 +24,7 @@ const CustomerEdit = () => {
         }
 
         setCustomer(data.data); // Make sure to set data.data
+        console.log("Customer data set:", data.data);
       } catch (err) {
         console.error("Error while fetching customer:", err);
         if (err instanceof SyntaxError) {

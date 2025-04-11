@@ -14,7 +14,7 @@ const Customers = () => {
 
   // Check if the user is logged in and has access (Admin or Manager)
   if (isLogged) {
-    if (role === 3 || role === 2) {
+    if (role === 1) {
       return (
         <div>
           <div className="container-fluid admin-pages">
