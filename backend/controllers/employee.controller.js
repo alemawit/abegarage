@@ -117,6 +117,10 @@ async function updateEmployee(req, res) {
     const employee_id = req.params.employee_id;
     const updatedData = req.body;
 
+    // Log incoming request details
+    console.log("Updating employee:", employee_id, updatedData);
+
+    // Validate required fields
     if (
       !updatedData.employee_first_name ||
       !updatedData.employee_last_name ||
@@ -127,6 +131,7 @@ async function updateEmployee(req, res) {
         .json({ error: "First name, last name, and phone are required" });
     }
 
+    // Ensure active_employee is a boolean if provided
     if (
       updatedData.active_employee !== undefined &&
       typeof updatedData.active_employee !== "boolean"
@@ -134,19 +139,23 @@ async function updateEmployee(req, res) {
       return res.status(400).json({ error: "Active status must be a boolean" });
     }
 
+    // Update employee using the service
     const result = await employeeService.updateEmployee(
       employee_id,
       updatedData
     );
 
+    // Check the result and respond accordingly
     if (result.success) {
+      console.log("Employee updated successfully:", result.message);
       return res.status(200).json({ message: result.message });
     } else {
+      console.error("Update failed:", result.message);
       return res.status(400).json({ error: result.message });
     }
   } catch (error) {
     console.error("Error updating employee:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
 
