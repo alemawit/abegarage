@@ -71,11 +71,31 @@ async function getAllCustomers(req, res, next) {
   }
 }
 // Function to get a customer by ID
+// Function to get a customer by ID
 const getCustomerById = async (req, res) => {
   const customerId = req.params.id;
-  // Logic to get a customer by ID
-  // For example, you could fetch this from a database
-  res.send(`Customer with ID: ${customerId}`);
+
+  // Logic to get a customer by ID from the database
+  try {
+    const customer = await fetchCustomerById(customerId); // Replace with your actual data retrieval logic
+
+    if (!customer) {
+      return res.status(404).json({ status: "error", message: "Customer not found." });
+    }
+
+    // Return the customer data as JSON
+    res.json({ status: "success", data: customer });
+  } catch (error) {
+    console.error("Error fetching customer:", error);
+    res.status(500).json({ status: "error", message: "An error occurred while fetching the customer." });
+  }
+};
+
+// Example function to simulate fetching a customer from a database
+const fetchCustomerById = async (customerId) => {
+  // Replace this with your actual database query logic
+  // For example, using a database library to fetch a customer record
+  return { customer_id: customerId, customer_name: "Test Customer" }; // Dummy data
 };
 // Create the getSingleCustomer controller
 async function getSingleCustomer(req, res, next) {

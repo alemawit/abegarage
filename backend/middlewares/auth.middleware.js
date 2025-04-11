@@ -1,15 +1,11 @@
-// Import the dotenv module
 require("dotenv").config();
-// Import the jsonwebtoken package
 const jwt = require("jsonwebtoken");
 const employeeService = require("../service/employee.service");
 
-// A function to verify the token received from the frontend
 const verifyToken = async (req, res, next) => {
-  // Get the token from the Authorization header in the format "Bearer <token>"
   const token = req.headers["authorization"];
 
-  // Check if the token is provided
+  // Check if token is provided
   if (!token) {
     return res.status(403).json({
       status: "fail",
@@ -17,30 +13,34 @@ const verifyToken = async (req, res, next) => {
     });
   }
 
-  // Extract token after "Bearer" if present
-  const tokenWithoutBearer = token.split(" ")[1];
+  // Extract token without 'Bearer ' prefix
+  const tokenWithoutBearer = token.startsWith("Bearer ")
+    ? token.split(" ")[1].trim()
+    : token.trim();
 
-  // Verify the token using the secret key from environment variables
+  console.log("Received token:", token);
+  console.log("Token without 'Bearer':", tokenWithoutBearer);
+
+  // Verify the token
   jwt.verify(
     tokenWithoutBearer,
     process.env.JWT_SECRET,
     async (err, decoded) => {
-      // Check if the token is valid
       if (err) {
+        console.error("Token verification error:", err);
         return res.status(401).json({
           status: "fail",
           message: "Unauthorized!",
         });
       }
 
-      // Set the decoded token to the request object
-      req.employee_email = decoded.employee_email;
-      next();
+      console.log("Decoded token:", decoded);
+      req.employee_email = decoded.employee_email; // Ensure this matches your token's payload
+      next(); // Proceed to the next middleware/route
     }
   );
 };
 
-// A function to check if the user is an admin
 const isAdmin = async (req, res, next) => {
   const employee_email = req.employee_email;
 
@@ -55,9 +55,9 @@ const isAdmin = async (req, res, next) => {
       });
     }
 
-    // Check if the employee is an admin (assuming 3 is the role ID for admin)
+    // Ensure this matches your role ID for admin
     if (employee[0].company_role_id === 1) {
-      return next();
+      return next(); // Proceed if the user is an admin
     } else {
       return res.status(403).json({
         status: "fail",
@@ -73,10 +73,7 @@ const isAdmin = async (req, res, next) => {
   }
 };
 
-// Export the verifyToken and isAdmin functions
-const authMiddleware = {
+module.exports = {
   verifyToken,
   isAdmin,
 };
-
-module.exports = authMiddleware;
