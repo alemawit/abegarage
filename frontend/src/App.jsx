@@ -48,7 +48,7 @@ function App() {
         <Route
           path="/admin/order"
           element={
-            <PrivateAuthRoute roles={[2, 3]}>
+            <PrivateAuthRoute roles={[1]}>
               <AddNewOrder />
             </PrivateAuthRoute>
           }
@@ -73,7 +73,7 @@ function App() {
         <Route
           path="/admin/customer-detail/:id"
           element={
-            <PrivateAuthRoute roles={[2, 3]}>
+            <PrivateAuthRoute roles={[1]}>
               <CustomerDetail />
             </PrivateAuthRoute>
           }

@@ -1,5 +1,5 @@
 // Import the API base URL from the environment variables
-const api_url = import.meta.env.VITE_API_BASE_URL;
+const api_url = import.meta.env.VITE_REACT_APP_URL;
 
 // ==============================
 // CREATE ORDER
@@ -11,7 +11,7 @@ const createOrder = async (orderData, loggedInEmployeeToken) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-access-token": loggedInEmployeeToken,
+        Authorization: `Bearer ${loggedInEmployeeToken}`, // Use Bearer token
       },
       body: JSON.stringify(orderData),
     });
@@ -38,7 +38,7 @@ const getAllOrders = async (loggedInEmployeeToken) => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "x-access-token": loggedInEmployeeToken,
+        Authorization: `Bearer ${loggedInEmployeeToken}`, // Use Bearer token
       },
     });
 
@@ -64,7 +64,7 @@ const getCustomerOrders = async (customer_id, loggedInEmployeeToken) => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "x-access-token": loggedInEmployeeToken,
+        Authorization: `Bearer ${loggedInEmployeeToken}`, // Use Bearer token
       },
     });
 
@@ -90,7 +90,7 @@ const updateOrder = async (orderData, loggedInEmployeeToken) => {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "x-access-token": loggedInEmployeeToken,
+        Authorization: `Bearer ${loggedInEmployeeToken}`, // Use Bearer token
       },
       body: JSON.stringify(orderData),
     });

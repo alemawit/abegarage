@@ -1,8 +1,6 @@
-// Import from the env
-const api_url = import.meta.env.VITE_API_BASE_URL;
+const api_url = import.meta.env.VITE_REACT_APP_URL;
 
 // A function to create a new vehicle
-// Function to create a new vehicle
 const createVehicle = async (
   formVehicleData,
   loggedInEmployeeToken,
@@ -22,7 +20,7 @@ const createVehicle = async (
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-access-token": loggedInEmployeeToken,
+          Authorization: `Bearer ${loggedInEmployeeToken}`, // Use Bearer token
         },
         body: JSON.stringify(formVehicleData),
       }
@@ -56,7 +54,7 @@ const getVehicle = async (customer_id, loggedInEmployeeToken) => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "x-access-token": loggedInEmployeeToken,
+          Authorization: `Bearer ${loggedInEmployeeToken}`, // Use Bearer token
         },
       }
     );
