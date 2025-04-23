@@ -4,7 +4,7 @@ import logo from "../../../assets/images/logo.png";
 //import custome context hook
 //import the link component from react router dom
 import { Link } from "react-router-dom";
-import { useAuth } from "../../../Contexts/AuthContext";
+import { useAuth } from "../../../Contexts/AuthContext.jsx";
 import loginService from "../../../services/login.service.jsx";
 
 function Header() {
