@@ -18,11 +18,10 @@ const cors = require("cors");
 // ];
 
 const allowedOrigins = [
-  "http://localhost:3000", // your frontend dev URL
-  // Add other allowed origins here, like deployed frontend URL
-  // 'https://yourfrontenddomain.com',
+  "http://localhost:5173", // Local frontend
+  "http://localhost:3000", // Another local environment (if used)
+  "https://abegarage1.netlify.app", // Your deployed frontend on Netlify
 ];
-
 const corsOptions = {
   origin: function (origin, callback) {
     console.log("🔍 CORS Origin:", origin); // Log incoming origin
