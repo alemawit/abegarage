@@ -13,42 +13,51 @@ async function validateServiceExists(serviceId) {
 // Function to create a new order
 async function createOrder(orderData) {
   try {
-    // Insert into orders table
-    const query = `
-      INSERT INTO orders (employee_id, customer_id, vehicle_id, order_description, estimated_completion_date, order_completed)
-      VALUES (?, ?, ?, ?, ?, ?)
+    // ✅ Insert into orders table
+    const orderQuery = `
+      INSERT INTO orders (employee_id, customer_id, vehicle_id, active_order, order_hash)
+      VALUES (?, ?, ?, ?, ?)
     `;
 
-    const rows = await conn.query(query, [
+    const orderResult = await conn.query(orderQuery, [
       orderData.employee_id,
       orderData.customer_id,
       orderData.vehicle_id,
-      orderData.order_info?.additional_request || "", // Avoid undefined
-      orderData.order_info?.estimated_completion_date || null, // Avoid undefined
-      orderData.order_info?.completion_date ? 1 : 0, // Set completion flag
+      orderData.active_order || 1,
+      orderData.order_hash || "default-hash", // Fallback
     ]);
 
-    const order_id = rows.insertId; // Get the inserted order ID
+    const order_id = orderResult.insertId;
 
     // ✅ Insert into order_status table
-    const queryStatus = `
+    const statusQuery = `
       INSERT INTO order_status (order_id, order_status)
       VALUES (?, ?)
     `;
-    await conn.query(queryStatus, [
+    await conn.query(statusQuery, [
       order_id,
-      orderData.order_status?.order_status || 1,
-    ]); // Default status to 1 if not provided
+      orderData.order_status?.order_status || 1, // Default to status 1
+    ]);
 
-    // ✅ Insert into order_info table if needed
-    const queryInfo = `
-      INSERT INTO order_info (order_id, order_total_price, estimated_completion_date, additional_request, notes_for_internal_use, notes_for_customer, additional_requests_completed)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+    // ✅ Insert into order_info table
+    const infoQuery = `
+      INSERT INTO order_info (
+        order_id,
+        order_total_price,
+        estimated_completion_date,
+        completion_date,
+        additional_request,
+        notes_for_internal_use,
+        notes_for_customer,
+        additional_requests_completed
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    await conn.query(queryInfo, [
+    await conn.query(infoQuery, [
       order_id,
-      orderData.order_info?.order_total_price || 0, // Default to 0 if not provided
+      orderData.order_info?.order_total_price || 0,
       orderData.order_info?.estimated_completion_date || null,
+      orderData.order_info?.completion_date || null,
       orderData.order_info?.additional_request || "",
       orderData.order_info?.notes_for_internal_use || "",
       orderData.order_info?.notes_for_customer || "",
@@ -56,12 +65,12 @@ async function createOrder(orderData) {
     ]);
 
     // ✅ Insert into order_services table
-    for (let service of orderData.order_services) {
-      const query2 = `
+    for (let service of orderData.order_services || []) {
+      const serviceQuery = `
         INSERT INTO order_services (order_id, service_id, service_completed)
         VALUES (?, ?, ?)
       `;
-      await conn.query(query2, [
+      await conn.query(serviceQuery, [
         order_id,
         service.service_id,
         service.service_completed || 0,
@@ -70,13 +79,14 @@ async function createOrder(orderData) {
 
     return { success: true, message: "Order created successfully!" };
   } catch (error) {
-    console.error("Error creating order:", error);
+    console.error("❌ Error creating order:", error);
     return {
       success: false,
       message: "Internal server error: " + error.message,
     };
   }
 }
+
 
 // Function to retrieve all orders
 
@@ -216,7 +226,7 @@ async function getSingleOrder(order_id) {
 // UPDATE ORDER
 async function updateOrder(order_id, orderData) {
   try {
-    // Validate if order ID exists
+    // Check if order exists
     const order = await conn.query(
       `SELECT COUNT(*) AS count FROM orders WHERE order_id = ?`,
       [order_id]
@@ -225,26 +235,29 @@ async function updateOrder(order_id, orderData) {
       throw new Error("Order not found");
     }
 
-    // Update the order in the orders table
-    const updateQuery = `
+    // Update orders table (only valid columns!)
+    const updateOrderQuery = `
       UPDATE orders 
-      SET employee_id = ?, customer_id = ?, vehicle_id = ?, order_description = ?, estimated_completion_date = ?, order_completed = ? 
+      SET employee_id = ?, customer_id = ?, vehicle_id = ?, active_order = ?
       WHERE order_id = ?;
     `;
-    await conn.query(updateQuery, [
+    await conn.query(updateOrderQuery, [
       orderData.employee_id,
       orderData.customer_id,
       orderData.vehicle_id,
-      orderData.order_description,
-      orderData.estimated_completion_date,
-      orderData.order_completed,
+      orderData.order_completed ? 0 : 1, // Assuming active_order = 0 means completed
       order_id,
     ]);
 
-    // Update the order_info table
+    // Update order_info table
     const updateInfoQuery = `
       UPDATE order_info 
-      SET order_total_price = ?, additional_request = ?, notes_for_internal_use = ?, notes_for_customer = ? 
+      SET order_total_price = ?, 
+          additional_request = ?, 
+          notes_for_internal_use = ?, 
+          notes_for_customer = ?, 
+          estimated_completion_date = ?,
+          additional_requests_completed = ?
       WHERE order_id = ?;
     `;
     await conn.query(updateInfoQuery, [
@@ -252,13 +265,16 @@ async function updateOrder(order_id, orderData) {
       orderData.order_info.additional_request,
       orderData.order_info.notes_for_internal_use,
       orderData.order_info.notes_for_customer,
+      orderData.estimated_completion_date,
+      orderData.order_completed ? 1 : 0,
       order_id,
     ]);
 
-    // Update the services in the order_services table
+    // Update order_services: delete and re-insert
     await conn.query(`DELETE FROM order_services WHERE order_id = ?`, [
       order_id,
     ]);
+
     for (let service of orderData.order_services) {
       const insertServiceQuery = `
         INSERT INTO order_services (order_id, service_id, service_completed) 
@@ -267,7 +283,7 @@ async function updateOrder(order_id, orderData) {
       await conn.query(insertServiceQuery, [
         order_id,
         service.service_id,
-        service.service_completed || 0,
+        service.service_completed ? 1 : 0,
       ]);
     }
 
@@ -277,6 +293,7 @@ async function updateOrder(order_id, orderData) {
     return { success: false, message: error.message };
   }
 }
+
 
 // Function to delete an order
 async function deleteOrder(order_id) {

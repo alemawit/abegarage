@@ -12,24 +12,38 @@ const cors = require("cors");
 //   optionsSuccessStatus: 200,
 // };
 // CORS configuration
+// const allowedOrigins = [
+//   "http://localhost:5173", // Local dev
+//   process.env.FRONTEND_URL, // Deployed frontend (from environment variable)
+// ];
+
 const allowedOrigins = [
-  "http://localhost:5173", // Local dev
-  process.env.FRONTEND_URL, // Deployed frontend (from environment variable)
+  "http://localhost:3000", // your frontend dev URL
+  // Add other allowed origins here, like deployed frontend URL
+  // 'https://yourfrontenddomain.com',
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    console.log("CORS Origin:", origin);  // Log incoming origin for debugging
-    if (!origin) return callback(null, true); // Allow no-origin requests (e.g., mobile apps)
+    console.log("🔍 CORS Origin:", origin); // Log incoming origin
+    if (!origin) {
+      console.log(
+        "✅ No origin - request allowed (e.g., Postman or mobile app)"
+      );
+      return callback(null, true);
+    }
     if (allowedOrigins.includes(origin)) {
+      console.log("✅ Allowed origin:", origin);
       return callback(null, true);
     } else {
+      console.log("❌ Blocked by CORS:", origin);
       return callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
-  optionSuccessStatus: 200,
+  optionsSuccessStatus: 200,
 };
+
 console.log("Frontend URL:", process.env.FRONTEND_URL);
 // Create a variable to hold our port number
 const port = process.env.PORT; // Using PORT from .env
