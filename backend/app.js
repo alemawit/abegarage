@@ -21,6 +21,7 @@ const allowedOrigins = [
   "http://localhost:5173", // Local frontend
   "http://localhost:3000", // Another local environment (if used)
   "https://abegarage1.netlify.app", // Your deployed frontend on Netlify
+  "http://174.129.63.175", // 👈 Add your public IP here
 ];
 const corsOptions = {
   origin: function (origin, callback) {
